@@ -1,0 +1,357 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}{{ produto.titulo_hero|default:produto.nome }}{% endblock %}
+{% block page_title %}{{ produto.titulo_hero|default:produto.nome }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/produto_viewer.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="produto-viewer">
+    <aside class="viewer-sidebar">
+        <div class="sidebar-header">
+            <a href="{% url 'dashboard:meus_produtos' %}" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+            <h3>{{ produto.nome }}</h3>
+            <span class="categoria-badge">
+                <i class="fas {{ produto.categoria.icone|default:'fa-box' }}"></i>
+                {{ produto.categoria.nome }}
+            </span>
+        </div>
+
+        <div class="conteudos-lista">
+            <h4><i class="fas fa-list"></i> Conteudos ({{ conteudos|length }})</h4>
+            {% for conteudo in conteudos %}
+            <div class="conteudo-item {% if forloop.first %}active{% endif %}"
+                 data-id="{{ conteudo.id }}"
+                 data-tipo="{{ conteudo.tipo }}"
+                 onclick="carregarConteudo({{ conteudo.id }})">
+                <div class="conteudo-numero">{{ forloop.counter }}</div>
+                <div class="conteudo-icon">
+                    {% if conteudo.tipo == 'pdf' %}
+                        <i class="fas fa-file-pdf"></i>
+                    {% elif conteudo.tipo == 'video' or conteudo.tipo == 'video_url' %}
+                        <i class="fas fa-play-circle"></i>
+                    {% elif conteudo.tipo == 'imagem' %}
+                        <i class="fas fa-image"></i>
+                    {% elif conteudo.tipo == 'texto' %}
+                        <i class="fas fa-file-alt"></i>
+                    {% elif conteudo.tipo == 'zip' %}
+                        <i class="fas fa-file-archive"></i>
+                    {% elif conteudo.tipo == 'link' %}
+                        <i class="fas fa-link"></i>
+                    {% endif %}
+                </div>
+                <div class="conteudo-info">
+                    <span class="conteudo-titulo">{{ conteudo.titulo }}</span>
+                    {% if conteudo.duracao %}
+                    <span class="conteudo-duracao">
+                        <i class="fas fa-clock"></i> {{ conteudo.duracao }}
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="conteudo-status">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </aside>
+
+    <main class="viewer-main">
+        {% if conteudos %}
+        <div id="viewer-container">
+            <div class="viewer-header">
+                <h1 id="current-titulo">{{ conteudos.0.titulo }}</h1>
+                <p id="current-descricao">{{ conteudos.0.descricao }}</p>
+                <div class="viewer-actions">
+                    <button class="btn btn-download" id="btn-download" style="display:none;">
+                        <i class="fas fa-download"></i> Baixar
+                    </button>
+                    <button class="btn btn-fullscreen" id="btn-fullscreen" onclick="toggleFullscreen()">
+                        <i class="fas fa-expand"></i> Tela Cheia
+                    </button>
+                </div>
+            </div>
+
+            <div class="viewer-content" id="viewer-content"></div>
+
+            <div class="viewer-navigation">
+                <button class="btn btn-nav" id="btn-anterior" onclick="anteriorConteudo()">
+                    <i class="fas fa-chevron-left"></i> Anterior
+                </button>
+                <button class="btn btn-nav btn-primary" id="btn-proximo" onclick="proximoConteudo()">
+                    Proximo <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <h2>Nenhum conteudo disponivel</h2>
+            <p>Este produto ainda nao possui conteudos liberados.</p>
+        </div>
+        {% endif %}
+    </main>
+</div>
+
+<div id="image-modal" class="modal-viewer" style="display:none;">
+    <div class="modal-content">
+        <span class="modal-close" onclick="fecharImagemModal()">&times;</span>
+        <img id="modal-image" src="" alt="">
+        <div class="modal-controls">
+            <button onclick="zoomIn()"><i class="fas fa-search-plus"></i></button>
+            <button onclick="zoomOut()"><i class="fas fa-search-minus"></i></button>
+            <button onclick="resetZoom()"><i class="fas fa-undo"></i></button>
+        </div>
+    </div>
+</div>
+
+<script>
+const conteudos = [
+    {% for conteudo in conteudos %}
+    {
+        id: {{ conteudo.id }},
+        titulo: "{{ conteudo.titulo|escapejs }}",
+        descricao: "{{ conteudo.descricao|escapejs }}",
+        tipo: "{{ conteudo.tipo }}",
+        {% if conteudo.arquivo %}
+        arquivo: "{{ conteudo.arquivo.url }}",
+        {% endif %}
+        {% if conteudo.imagem %}
+        imagem: "{{ conteudo.imagem.url }}",
+        {% endif %}
+        {% if conteudo.url_externa %}
+        url_externa: "{{ conteudo.url_externa }}",
+        {% endif %}
+        {% if conteudo.texto_html %}
+        texto_html: `{{ conteudo.texto_html|escapejs }}`,
+        {% endif %}
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+];
+
+let currentIndex = 0;
+let imageZoom = 1;
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (conteudos.length > 0) {
+        carregarConteudo(conteudos[0].id);
+    }
+});
+
+function carregarConteudo(id) {
+    const index = conteudos.findIndex(c => c.id === id);
+    if (index === -1) return;
+
+    currentIndex = index;
+    const conteudo = conteudos[index];
+
+    document.getElementById('current-titulo').textContent = conteudo.titulo;
+    document.getElementById('current-descricao').textContent = conteudo.descricao || '';
+
+    document.querySelectorAll('.conteudo-item').forEach(item => {
+        item.classList.remove('active');
+        if (parseInt(item.dataset.id) === id) {
+            item.classList.add('active');
+        }
+    });
+
+    const viewerContent = document.getElementById('viewer-content');
+    const btnDownload = document.getElementById('btn-download');
+
+    viewerContent.innerHTML = '';
+    btnDownload.style.display = 'none';
+
+    switch(conteudo.tipo) {
+        case 'video':
+            if (conteudo.arquivo) {
+                viewerContent.innerHTML = `
+                    <video controls controlsList="nodownload" class="video-player">
+                        <source src="${conteudo.arquivo}" type="video/mp4">
+                        Seu navegador nao suporta video HTML5.
+                    </video>
+                `;
+            }
+            break;
+
+        case 'video_url':
+            if (conteudo.url_externa) {
+                const videoId = extrairVideoId(conteudo.url_externa);
+                if (videoId) {
+                    viewerContent.innerHTML = `
+                        <iframe class="video-iframe"
+                                src="https://www.youtube.com/embed/${videoId}"
+                                frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowfullscreen>
+                        </iframe>
+                    `;
+                } else {
+                    viewerContent.innerHTML = '<p class="error">URL de video invalida</p>';
+                }
+            }
+            break;
+
+        case 'imagem':
+            if (conteudo.imagem) {
+                viewerContent.innerHTML = `
+                    <div class="image-container">
+                        <img src="${conteudo.imagem}"
+                             alt="${conteudo.titulo}"
+                             class="image-viewer"
+                             onclick="abrirImagemModal('${conteudo.imagem}')">
+                        <p class="image-hint"><i class="fas fa-search-plus"></i> Clique para ampliar</p>
+                    </div>
+                `;
+                btnDownload.style.display = 'inline-flex';
+                btnDownload.onclick = () => downloadArquivo(conteudo.imagem, conteudo.titulo);
+            }
+            break;
+
+        case 'pdf':
+            if (conteudo.arquivo) {
+                viewerContent.innerHTML = `
+                    <iframe class="pdf-viewer"
+                            src="${conteudo.arquivo}#toolbar=1&navpanes=0&scrollbar=1"
+                            type="application/pdf">
+                    </iframe>
+                `;
+                btnDownload.style.display = 'inline-flex';
+                btnDownload.onclick = () => downloadArquivo(conteudo.arquivo, conteudo.titulo);
+            }
+            break;
+
+        case 'texto':
+            if (conteudo.texto_html) {
+                viewerContent.innerHTML = `
+                    <div class="texto-viewer">
+                        ${conteudo.texto_html}
+                    </div>
+                `;
+            }
+            break;
+
+        case 'zip':
+            if (conteudo.arquivo) {
+                viewerContent.innerHTML = `
+                    <div class="download-card">
+                        <i class="fas fa-file-archive"></i>
+                        <h3>${conteudo.titulo}</h3>
+                        <p>Arquivo compactado disponivel para download</p>
+                        <button class="btn btn-primary btn-lg" onclick="downloadArquivo('${conteudo.arquivo}', '${conteudo.titulo}')">
+                            <i class="fas fa-download"></i> Baixar Arquivo
+                        </button>
+                    </div>
+                `;
+            }
+            break;
+
+        case 'link':
+            if (conteudo.url_externa) {
+                viewerContent.innerHTML = `
+                    <div class="download-card">
+                        <i class="fas fa-external-link-alt"></i>
+                        <h3>${conteudo.titulo}</h3>
+                        <p>Link externo</p>
+                        <a href="${conteudo.url_externa}" target="_blank" class="btn btn-primary btn-lg">
+                            <i class="fas fa-external-link-alt"></i> Acessar Link
+                        </a>
+                    </div>
+                `;
+            }
+            break;
+    }
+
+    document.getElementById('btn-anterior').disabled = currentIndex === 0;
+    document.getElementById('btn-proximo').disabled = currentIndex === conteudos.length - 1;
+}
+
+function proximoConteudo() {
+    if (currentIndex < conteudos.length - 1) {
+        carregarConteudo(conteudos[currentIndex + 1].id);
+    }
+}
+
+function anteriorConteudo() {
+    if (currentIndex > 0) {
+        carregarConteudo(conteudos[currentIndex - 1].id);
+    }
+}
+
+function extrairVideoId(url) {
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+}
+
+function downloadArquivo(url, nome) {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = nome;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function toggleFullscreen() {
+    const viewerContent = document.getElementById('viewer-content');
+    if (!document.fullscreenElement) {
+        viewerContent.requestFullscreen().catch(err => {
+            alert('Erro ao entrar em tela cheia: ' + err.message);
+        });
+    } else {
+        document.exitFullscreen();
+    }
+}
+
+function abrirImagemModal(url) {
+    document.getElementById('modal-image').src = url;
+    document.getElementById('image-modal').style.display = 'flex';
+    imageZoom = 1;
+    aplicarZoom();
+}
+
+function fecharImagemModal() {
+    document.getElementById('image-modal').style.display = 'none';
+}
+
+function zoomIn() {
+    imageZoom += 0.2;
+    aplicarZoom();
+}
+
+function zoomOut() {
+    if (imageZoom > 0.4) {
+        imageZoom -= 0.2;
+        aplicarZoom();
+    }
+}
+
+function resetZoom() {
+    imageZoom = 1;
+    aplicarZoom();
+}
+
+function aplicarZoom() {
+    const img = document.getElementById('modal-image');
+    img.style.transform = `scale(${imageZoom})`;
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('image-modal');
+    if (event.target == modal) {
+        fecharImagemModal();
+    }
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight') proximoConteudo();
+    if (e.key === 'ArrowLeft') anteriorConteudo();
+    if (e.key === 'Escape') fecharImagemModal();
+});
+</script>
+{% endblock %}

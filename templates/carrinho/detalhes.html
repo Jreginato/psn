@@ -1,0 +1,392 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#10b981" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Personal Trainer" />
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="{% static 'manifest.json' %}" />
+    
+    <!-- iOS Icons -->
+    <link rel="apple-touch-icon" sizes="72x72" href="{% static 'icons/icon-72x72.png' %}" />
+    <link rel="apple-touch-icon" sizes="96x96" href="{% static 'icons/icon-96x96.png' %}" />
+    <link rel="apple-touch-icon" sizes="128x128" href="{% static 'icons/icon-128x128.png' %}" />
+    <link rel="apple-touch-icon" sizes="144x144" href="{% static 'icons/icon-144x144.png' %}" />
+    <link rel="apple-touch-icon" sizes="152x152" href="{% static 'icons/icon-152x152.png' %}" />
+    <link rel="apple-touch-icon" sizes="192x192" href="{% static 'icons/icon-192x192.png' %}" />
+    
+    <title>Carrinho de Compras | Personal Trainer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/sales.css' %}">
+    <style>
+        .carrinho-page {
+            padding: 100px 0 60px;
+            min-height: 100vh;
+        }
+        .carrinho-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .carrinho-header h1 {
+            font-size: 42px;
+            margin-bottom: 16px;
+        }
+        .carrinho-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 32px;
+            align-items: start;
+        }
+        .carrinho-vazio {
+            text-align: center;
+            padding: 80px 24px;
+            grid-column: 1 / -1;
+        }
+        .carrinho-vazio i {
+            font-size: 80px;
+            color: var(--border);
+            margin-bottom: 24px;
+        }
+        .carrinho-vazio h2 {
+            font-size: 28px;
+            margin-bottom: 16px;
+        }
+        .carrinho-vazio p {
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+        .carrinho-itens {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 24px;
+        }
+        .carrinho-itens h2 {
+            font-size: 24px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .carrinho-item {
+            display: grid;
+            grid-template-columns: 100px 1fr auto;
+            gap: 16px;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .carrinho-item:last-child {
+            border-bottom: none;
+        }
+        .item-imagem {
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--background);
+        }
+        .item-imagem img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .item-nome {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .item-categoria {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .item-preco {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .item-acoes {
+            display: flex;
+            align-items: center;
+        }
+        .btn-remover {
+            background: transparent;
+            border: none;
+            color: var(--error);
+            cursor: pointer;
+            padding: 8px;
+            font-size: 20px;
+            transition: transform 0.2s;
+        }
+        .btn-remover:hover {
+            transform: scale(1.1);
+        }
+        .carrinho-resumo {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 24px;
+            position: sticky;
+            top: 100px;
+        }
+        .carrinho-resumo h2 {
+            font-size: 24px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .resumo-linha {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            font-size: 16px;
+        }
+        .resumo-total {
+            border-top: 2px solid var(--border);
+            margin-top: 16px;
+            padding-top: 16px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .resumo-total .valor {
+            color: var(--primary);
+            font-size: 28px;
+        }
+        .btn-finalizar {
+            width: 100%;
+            padding: 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 24px;
+            transition: all 0.3s;
+        }
+        .btn-finalizar:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        .btn-continuar {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+        }
+        .btn-continuar:hover {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-limpar {
+            width: 100%;
+            padding: 10px;
+            background: transparent;
+            color: var(--error);
+            border: 1px solid var(--error);
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: all 0.3s;
+        }
+        .btn-limpar:hover {
+            background: var(--error);
+            color: white;
+        }
+        @media (max-width: 768px) {
+            .carrinho-container {
+                grid-template-columns: 1fr;
+            }
+            .carrinho-resumo {
+                position: static;
+            }
+            .carrinho-item {
+                grid-template-columns: 80px 1fr auto;
+                gap: 12px;
+            }
+            .item-imagem {
+                width: 80px;
+                height: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- TopBar (Menu) -->
+    <header class="topbar" id="topbar">
+        <div class="container nav-wrap">
+            <a href="{% url 'sales' %}" class="brand">Personal<span>Trainer</span></a>
+            <nav class="nav">
+                <a href="{% url 'produtos:catalogo' %}">Catálogo</a>
+                <a href="{% url 'sales' %}#beneficios">Benefícios</a>
+                <a href="{% url 'sales' %}#servicos">Treinamento</a>
+                <a href="{% url 'sales' %}#faq">FAQ</a>
+            </nav>
+            <div class="nav-actions">
+                <a href="{% url 'carrinho:carrinho_detalhes' %}" class="btn btn-ghost btn-sm" style="position: relative;">
+                    <i class="fas fa-shopping-cart"></i>
+                    {% if carrinho|length > 0 %}
+                        <span style="position: absolute; top: -5px; right: -5px; background: var(--primary); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: bold;">{{ carrinho|length }}</span>
+                    {% endif %}
+                </a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'dashboard:home' %}" class="btn btn-ghost btn-sm">
+                    <i class="fas fa-user-circle"></i> Área do Aluno
+                </a>
+                {% else %}
+                <a href="{% url 'accounts:login' %}" class="btn btn-ghost btn-sm">
+                    <i class="fas fa-sign-in-alt"></i> Entrar
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- Página do Carrinho -->
+    <section class="carrinho-page">
+        <div class="carrinho-header">
+            <h1>Seu Carrinho</h1>
+        </div>
+
+        {% if carrinho|length == 0 %}
+            <div class="carrinho-vazio">
+                <i class="fas fa-shopping-cart"></i>
+                <h2>Seu carrinho está vazio</h2>
+                <p>Adicione produtos ao carrinho para continuar comprando</p>
+                <a href="{% url 'produtos:catalogo' %}" class="btn-primary">Ver Catálogo</a>
+            </div>
+        {% else %}
+            <div class="carrinho-container">
+                <!-- Lista de Itens -->
+                <div class="carrinho-itens">
+                    <h2>Itens no Carrinho ({{ carrinho|length }})</h2>
+                    
+                    {% for item in carrinho %}
+                        <div class="carrinho-item">
+                            <div class="item-imagem">
+                                {% if item.produto.imagem_capa %}
+                                    <img src="{{ item.produto.imagem_capa.url }}" alt="{{ item.produto.nome }}">
+                                {% else %}
+                                    <img src="{% static 'images/placeholder.jpg' %}" alt="{{ item.produto.nome }}">
+                                {% endif %}
+                            </div>
+                            
+                            <div class="item-info">
+                                <div class="item-nome">{{ item.produto.nome }}</div>
+                                <div class="item-categoria">
+                                    <i class="fas {{ item.produto.categoria.icone }}"></i>
+                                    {{ item.produto.categoria.nome }}
+                                </div>
+                                <div class="item-preco">R$ {{ item.preco }}</div>
+                            </div>
+                            
+                            <div class="item-acoes">
+                                <form method="post" action="{% url 'carrinho:carrinho_remove' item.produto.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-remover" title="Remover">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Resumo -->
+                <div class="carrinho-resumo">
+                    <h2>Resumo do Pedido</h2>
+                    
+                    <div class="resumo-linha">
+                        <span>Subtotal ({{ carrinho|length }} {% if carrinho|length == 1 %}item{% else %}itens{% endif %})</span>
+                        <span>R$ {{ carrinho.get_total_preco }}</span>
+                    </div>
+                    
+                    <div class="resumo-linha resumo-total">
+                        <span>Total</span>
+                        <span class="valor">R$ {{ carrinho.get_total_preco }}</span>
+                    </div>
+                    
+                    <a href="{% url 'checkout:checkout' %}" class="btn-finalizar">
+                        <i class="fas fa-lock"></i> Finalizar Compra
+                    </a>
+                    
+                    <a href="{% url 'produtos:catalogo' %}" class="btn-continuar">
+                        <i class="fas fa-arrow-left"></i> Continuar Comprando
+                    </a>
+                    
+                    <form method="post" action="{% url 'carrinho:carrinho_clear' %}" 
+                          onsubmit="return confirm('Tem certeza que deseja esvaziar o carrinho?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-limpar">
+                            <i class="fas fa-times"></i> Esvaziar Carrinho
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+    </section>
+
+    <!-- Messages -->
+    {% if messages %}
+        <div class="messages-container" style="position: fixed; top: 80px; right: 24px; z-index: 1000; max-width: 400px;">
+            {% for message in messages %}
+                <div class="message message-{{ message.tags }}" style="background: {% if message.tags == 'success' %}var(--success){% elif message.tags == 'error' %}var(--error){% else %}var(--primary){% endif %}; color: white; padding: 16px 20px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn 0.3s;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+        <script>
+            setTimeout(() => {
+                document.querySelectorAll('.message').forEach(msg => {
+                    msg.style.animation = 'slideOut 0.3s';
+                    setTimeout(() => msg.remove(), 300);
+                });
+            }, 3000);
+        </script>
+        <style>
+            @keyframes slideIn {
+                from { transform: translateX(400px); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(400px); opacity: 0; }
+            }
+        </style>
+    {% endif %}
+
+    <!-- WhatsApp Float Button -->
+    <a href="https://wa.me/5511999999999" target="_blank" class="whatsapp-float">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+    
+    <script src="{% static 'js/pwa.js' %}"></script>
+</body>
+</html>

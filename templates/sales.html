@@ -1,0 +1,211 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Resultados reais com consultoria online personalizada e uma loja digital completa para evoluir no seu ritmo." />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#10b981" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Personal Trainer" />
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="{% static 'manifest.json' %}" />
+    
+    <!-- iOS Icons -->
+    <link rel="apple-touch-icon" sizes="72x72" href="{% static 'icons/icon-72x72.png' %}" />
+    <link rel="apple-touch-icon" sizes="96x96" href="{% static 'icons/icon-96x96.png' %}" />
+    <link rel="apple-touch-icon" sizes="128x128" href="{% static 'icons/icon-128x128.png' %}" />
+    <link rel="apple-touch-icon" sizes="144x144" href="{% static 'icons/icon-144x144.png' %}" />
+    <link rel="apple-touch-icon" sizes="152x152" href="{% static 'icons/icon-152x152.png' %}" />
+    <link rel="apple-touch-icon" sizes="192x192" href="{% static 'icons/icon-192x192.png' %}" />
+    
+    <title>Personal Trainer | Resultados Reais</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/sales.css' %}" />
+</head>
+<body>
+    <header class="topbar" id="topbar">
+        <div class="container nav-wrap">
+            <a href="#home" class="brand">Personal<span>Trainer</span></a>
+            <nav class="nav">
+                <a href="{% url 'produtos:catalogo' %}">Catálogo</a>
+                <a href="#beneficios">Benefícios</a>
+                <a href="#servicos">Treinamento</a>
+                <a href="#faq">FAQ</a>
+            </nav>
+            <div class="nav-actions">
+                <a href="{% url 'carrinho:carrinho_detalhes' %}" class="btn btn-ghost btn-sm" style="position: relative;">
+                    <i class="fas fa-shopping-cart"></i>
+                    {% if carrinho|length > 0 %}
+                        <span style="position: absolute; top: -5px; right: -5px; background: var(--primary); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: bold;">{{ carrinho|length }}</span>
+                    {% endif %}
+                </a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'dashboard:home' %}" class="btn btn-ghost btn-sm">
+                    <i class="fas fa-user-circle"></i> Área do Aluno
+                </a>
+                {% else %}
+                <a href="{% url 'accounts:login' %}" class="btn btn-ghost btn-sm">
+                    <i class="fas fa-sign-in-alt"></i> Entrar
+                </a>
+                {% endif %}
+                <a href="{% url 'agendamento:agendar' %}" class="btn btn-primary btn-sm">Agendar avaliação</a>
+            </div>
+        </div>
+    </header>
+
+    <main id="home">
+        <section class="hero">
+            <div class="container hero-grid">
+                <div class="hero-content">
+                    <p class="eyebrow">Treino com metodo, resultado com constancia</p>
+                    <h1>Treino personalizado para o seu objetivo, com suporte que funciona.</h1>
+                    <p class="subtitle">Consultoria online para quem quer acompanhamento de verdade. Loja digital para quem busca materiais prontos e objetivos.</p>
+                    <div class="hero-actions">
+                        <a href="#" class="btn btn-primary" data-cta="whatsapp" data-service="Treinamento Personalizado Online">Quero começar</a>
+                        <a href="#produtos" class="btn btn-ghost">Ver produtos</a>
+                    </div>
+                    <div class="stats">
+                        <div><strong>+8 anos</strong><span>de experiência prática</span></div>
+                        <div><strong>+300</strong><span>alunos acompanhados</span></div>
+                        <div><strong>Loja digital</strong><span>conteudos objetivos</span></div>
+                    </div>
+                </div>
+                <aside class="hero-card">
+                    <h3>O que voce encontra aqui</h3>
+                    <ul>
+                        <li>Consultoria online com acompanhamento</li>
+                        <li>Treinos por objetivo prontos para usar</li>
+                        <li>Ebooks e guias praticos</li>
+                        <li>Cursos com metodo de execucao</li>
+                    </ul>
+                    <a href="{% url 'agendamento:agendar' %}" class="btn btn-secondary"  data-service="Avaliação para Treinamento Online">Quero minha avaliação</a>
+                </aside>
+            </div>
+        </section>
+
+        <section class="benefits" id="beneficios">
+            <div class="container">
+                <h2>O que o cliente busca, voce encontra aqui</h2>
+                <p class="section-copy">Clareza no plano, consistencia no treino e suporte quando precisar.</p>
+                <div class="cards">
+                    <article class="card">
+                        <h3>Plano individual</h3>
+                        <p>Treino ajustado ao seu objetivo, rotina e evolucao semanal.</p>
+                    </article>
+                    <article class="card">
+                        <h3>Suporte real</h3>
+                        <p>Contato para ajustes e direcionamento do seu plano.</p>
+                    </article>
+                    <article class="card">
+                        <h3>Conteudo pratico</h3>
+                        <p>Produtos digitais objetivos para aplicar no dia a dia.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="pricing" id="servicos">
+            <div class="container">
+                <h2>Consultoria online</h2>
+                <p class="section-copy">Acompanhamento exclusivo para quem quer resultado com rotina organizada.</p>
+                <div class="pricing-grid">
+                    <article class="price-card featured">
+                        <p class="tag">Oferta principal</p>
+                        <h3>Consultoria Online Personalizada</h3>
+                        <p class="price">R$ 320<span>/mês</span></p>
+                        <ul>
+                            <li>Treino individual por objetivo</li>
+                            <li>Check-ins e ajustes semanais</li>
+                            <li>Suporte prioritario no WhatsApp</li>
+                            <li>Planejamento e acompanhamento continuo</li>
+                        </ul>
+                        <a href="{% url 'agendamento:agendar' %}" class="btn btn-primary w-full">Agendar avaliação</a>
+                        <a href="https://wa.me/5511999999999?text=Olá! Tenho interesse na Consultoria Online Personalizada" target="_blank" rel="noopener" class="btn btn-ghost w-full" style="margin-top: 12px;">
+                            <i class="fab fa-whatsapp"></i>  &nbsp;WhatsApp
+                        </a>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="products" id="produtos">
+            <div class="container">
+                <h2>Loja digital</h2>
+                <p class="section-copy">Produtos prontos para quem quer evoluir no proprio ritmo.</p>
+                <div class="products-grid">
+                    <article class="product-card">
+                        <h3>Treino por Objetivo</h3>
+                        <p>Protocolos organizados para emagrecimento, hipertrofia, definição e performance.</p>
+                        <a href="{% url 'produtos:catalogo' %}" class="btn btn-ghost">Ver Treino por Objetivo</a>
+                    </article>
+                    <article class="product-card">
+                        <h3>Ebooks</h3>
+                        <p>Guias aplicáveis sobre treino, rotina, hábitos e consistência para evolução contínua.</p>
+                        <a href="{% url 'produtos:catalogo' %}" class="btn btn-ghost">Ver Ebooks</a>
+                    </article>
+                    <article class="product-card">
+                        <h3>Cursos</h3>
+                        <p>Aulas completas com método prático para execução correta e progressão inteligente.</p>
+                        <a href="{% url 'produtos:catalogo' %}" class="btn btn-ghost">Ver Cursos</a>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="faq" id="faq">
+            <div class="container">
+                <h2>Perguntas frequentes</h2>
+                <div class="faq-list">
+                    <article class="faq-item">
+                        <button class="faq-question" type="button">O que encontro na loja digital?</button>
+                        <p class="faq-answer">Treinos por objetivo, ebooks e cursos com aplicacao pratica.</p>
+                    </article>
+                    <article class="faq-item">
+                        <button class="faq-question" type="button">Preciso de consultoria para comprar na loja?</button>
+                        <p class="faq-answer">Nao. Os produtos da loja podem ser comprados separadamente, quando quiser.</p>
+                    </article>
+                    <article class="faq-item">
+                        <button class="faq-question" type="button">Como recebo a consultoria e os produtos?</button>
+                        <p class="faq-answer">Consultoria: onboarding e suporte pelo WhatsApp. Loja: acesso digital liberado apos a compra.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-wrap">
+            <p>© 2026 Personal Trainer. Todos os direitos reservados.</p>
+            <div class="social-links">
+                <a href="https://instagram.com" target="_blank" rel="noopener" aria-label="Instagram" class="social-link">
+                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                </a>
+                <a href="https://youtube.com" target="_blank" rel="noopener" aria-label="YouTube" class="social-link">
+                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                </a>
+                <a href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook" class="social-link">
+                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                </a>
+            </div>
+            <a href="#home">Voltar ao topo</a>
+        </div>
+    </footer>
+
+    <!-- WhatsApp Flutuante -->
+    <a href="https://wa.me/5511999999999" target="_blank" rel="noopener" class="whatsapp-float" aria-label="WhatsApp">
+        <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+    </a>
+
+    <script src="{% static 'js/sales.js' %}"></script>
+    <script src="{% static 'js/pwa.js' %}"></script>
+</body>
+</html>

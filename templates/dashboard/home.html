@@ -1,0 +1,351 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block nav_home %}active{% endblock %}
+
+{% block content %}
+<div class="dashboard-content">
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <i class="fas fa-box"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Meus Produtos</span>
+                <span class="stat-value">{{ total_produtos }}</span>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <i class="fas fa-receipt"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Pedidos</span>
+                <span class="stat-value">{{ total_pedidos }}</span>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Acesso Vitalício</span>
+                <span class="stat-value">100%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Meus Produtos -->
+    <div class="section">
+        <div class="section-header">
+            <h2>Meus Produtos</h2>
+            <a href="{% url 'dashboard:meus_produtos' %}" class="btn-link">Ver todos →</a>
+        </div>
+        
+        {% if acessos %}
+        <div class="produtos-grid">
+            {% for acesso in acessos %}
+            <div class="produto-card">
+                {% if acesso.produto.imagem_capa %}
+                <img src="{{ acesso.produto.imagem_capa.url }}" alt="{{ acesso.produto.nome }}" class="produto-img">
+                {% else %}
+                <div class="produto-img-placeholder">
+                    <i class="fas {{ acesso.produto.categoria.icone|default:'fa-box' }}"></i>
+                </div>
+                {% endif %}
+                <div class="produto-info">
+                    <span class="produto-categoria">{{ acesso.produto.categoria.nome }}</span>
+                    <h3>{{ acesso.produto.nome }}</h3>
+                    <p>{{ acesso.produto.subtitulo_hero|default:""|truncatewords:15 }}</p>
+                    <a href="{% url 'dashboard:produto_detalhes' acesso.produto.slug %}" class="btn btn-primary btn-sm">Acessar Conteúdo</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-box-open"></i>
+            <h3>Nenhum produto ainda</h3>
+            <p>Explore o catálogo e adquira seu primeiro produto!</p>
+            <a href="{% url 'produtos:catalogo' %}" class="btn btn-primary">Ver Catálogo</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Últimos Pedidos -->
+    <div class="section">
+        <div class="section-header">
+            <h2>Últimos Pedidos</h2>
+            <a href="{% url 'dashboard:pedidos' %}" class="btn-link">Ver todos →</a>
+        </div>
+        
+        {% if pedidos %}
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Pedido</th>
+                        <th>Data</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pedido in pedidos %}
+                    <tr>
+                        <td><strong>#{{ pedido.id }}</strong></td>
+                        <td>{{ pedido.criado_em|date:"d/m/Y H:i" }}</td>
+                        <td>R$ {{ pedido.total }}</td>
+                        <td>
+                            <span class="badge badge-{{ pedido.status }}">
+                                {{ pedido.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">Nenhum pedido realizado ainda.</p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.dashboard-content {
+    max-width: 1200px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #8898aa;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #32325d;
+}
+
+.section {
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.section-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #32325d;
+}
+
+.btn-link {
+    color: #5e72e4;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.btn-link:hover {
+    color: #4c63d2;
+}
+
+.produtos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+.produto-card {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s;
+}
+
+.produto-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+}
+
+.produto-img, .produto-img-placeholder {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+.produto-img-placeholder {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 48px;
+}
+
+.produto-info {
+    padding: 20px;
+}
+
+.produto-categoria {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #5e72e4;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.produto-info h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #32325d;
+    margin-bottom: 8px;
+}
+
+.produto-info p {
+    font-size: 14px;
+    color: #8898aa;
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-state i {
+    font-size: 64px;
+    color: #adb5bd;
+    margin-bottom: 16px;
+}
+
+.empty-state h3 {
+    font-size: 20px;
+    color: #32325d;
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    color: #8898aa;
+    margin-bottom: 24px;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table thead {
+    background: #f7fafc;
+}
+
+.data-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: #8898aa;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.data-table td {
+    padding: 16px;
+    border-top: 1px solid #e9ecef;
+    color: #32325d;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-pendente {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.badge-aprovado {
+    background: #d4edda;
+    color: #155724;
+}
+
+.badge-cancelado {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.text-muted {
+    color: #8898aa;
+}
+
+@media (max-width: 768px) {
+    .section {
+        padding: 20px;
+    }
+    
+    .produtos-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

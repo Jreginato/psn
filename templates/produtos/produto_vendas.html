@@ -1,0 +1,183 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ produto.titulo_hero }} - JC Personal Trainer</title>
+    <link rel="stylesheet" href="{% static 'css/produto_vendas.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <header class="topbar" id="topbar">
+        <div class="container nav-wrap">
+            <a href="/" class="brand">Personal<span>Trainer</span></a>
+            <nav class="nav">
+                <a href="{% url 'produtos:catalogo' %}">Catálogo</a>
+                <a href="/#beneficios">Benefícios</a>
+                <a href="/#servicos">Treinamento</a>
+                <a href="/#faq">FAQ</a>
+            </nav>
+            <div class="nav-actions">
+                <a href="{% url 'carrinho:carrinho_detalhes' %}" class="btn btn-ghost btn-sm" style="position: relative;">
+                    <i class="fas fa-shopping-cart"></i>
+                    {% if carrinho|length > 0 %}
+                        <span style="position: absolute; top: -5px; right: -5px; background: var(--primary, #ff6b35); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: bold;">{{ carrinho|length }}</span>
+                    {% endif %}
+                </a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'dashboard:home' %}" class="btn btn-ghost btn-sm">
+                    <i class="fas fa-user-circle"></i> Área do Aluno
+                </a>
+                {% else %}
+                <a href="{% url 'accounts:login' %}" class="btn btn-ghost btn-sm">
+                    <i class="fas fa-sign-in-alt"></i> Entrar
+                </a>
+                {% endif %}
+                <a href="{% url 'agendamento:agendar' %}" class="btn btn-primary btn-sm">Agendar avaliação</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-media">
+                    {% if produto.video_vendas %}
+                        <div class="video-wrapper">
+                            <iframe src="{{ produto.video_vendas }}" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                    {% elif produto.imagem_destaque %}
+                        <img src="{{ produto.imagem_destaque.url }}" alt="{{ produto.titulo_hero }}">
+                    {% elif produto.imagem_capa %}
+                        <img src="{{ produto.imagem_capa.url }}" alt="{{ produto.titulo_hero }}">
+                    {% else %}
+                        <div class="media-placeholder">
+                            <i class="fas fa-image"></i>
+                            <span>Imagem do Produto</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="hero-text">
+                    <span class="badge">{{ produto.categoria.nome }}</span>
+                    <h1 class="hero-title">{{ produto.titulo_hero|default:produto.nome }}</h1>
+                    <p class="hero-subtitle">{{ produto.subtitulo_hero }}</p>
+                    
+                    {% if produto.texto_introducao %}
+                        <p class="hero-intro">{{ produto.texto_introducao|linebreaks }}</p>
+                    {% endif %}
+                    
+                    <div class="hero-cta">
+                        <div class="price-box">
+                            {% if produto.preco_promocional %}
+                                <span class="price-old">R$ {{ produto.preco|floatformat:2 }}</span>
+                                <span class="price-current">R$ {{ produto.preco_promocional|floatformat:2 }}</span>
+                                <span class="discount-badge">-{{ produto.desconto_percentual }}%</span>
+                            {% else %}
+                                <span class="price-current">R$ {{ produto.preco|floatformat:2 }}</span>
+                            {% endif %}
+                        </div>
+                        <form method="post" action="{% url 'carrinho:carrinho_add' produto.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-cta">
+                                <i class="fas fa-shopping-cart"></i> {{ produto.texto_cta|default:"Adicionar ao Carrinho" }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- O que está incluído -->
+    {% if produto.get_itens_inclusos %}
+    <section class="section-inclusos">
+        <div class="container">
+            <h2>O que está incluído</h2>
+            <ul class="lista-inclusos">
+                {% for item in produto.get_itens_inclusos %}
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        {{ item }}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Para quem é -->
+    {% if produto.para_quem_titulo or produto.para_quem_texto %}
+    <section class="section-para-quem">
+        <div class="container">
+            <h2>{{ produto.para_quem_titulo|default:"Para quem é este produto?" }}</h2>
+            <p>{{ produto.para_quem_texto|linebreaks }}</p>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Benefícios -->
+    {% if produto.get_beneficios %}
+    <section class="section-beneficios">
+        <div class="container">
+            <h2>O que você vai conseguir</h2>
+            <div class="grid-beneficios">
+                {% for beneficio in produto.get_beneficios %}
+                    <div class="card-beneficio">
+                        <h3>{{ beneficio.titulo }}</h3>
+                        <p>{{ beneficio.descricao }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Garantia -->
+    {% if produto.texto_garantia %}
+    <section class="section-garantia">
+        <div class="container">
+            <div class="garantia-box">
+                <i class="fas fa-shield-alt"></i>
+                <div class="garantia-text">
+                    <h3>Garantia Total</h3>
+                    <p>{{ produto.texto_garantia|linebreaks }}</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <h3>JC Personal Trainer</h3>
+                    <p>Transformando vidas através do fitness</p>
+                </div>
+                <div class="footer-links">
+                    <a href="/">Início</a>
+                    <a href="{% url 'produtos:catalogo' %}">Catálogo</a>
+                    <a href="{% url 'accounts:login' %}">Área de Clientes</a>
+                </div>
+                <div class="footer-social">
+                    <a href="https://instagram.com/jcpersonaltrainer" target="_blank"><i class="fab fa-instagram"></i></a>
+                    <a href="https://wa.me/5511999999999" target="_blank"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+            <p class="footer-copy">&copy; 2025 JC Personal Trainer. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- WhatsApp Flutuante -->
+    <a href="https://wa.me/5511999999999?text=Olá! Tenho dúvidas sobre o produto: {{ produto.nome }}" 
+       class="whatsapp-float" 
+       target="_blank"
+       title="Fale no WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+</body>
+</html>

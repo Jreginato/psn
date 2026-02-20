@@ -1,0 +1,304 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#10b981" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Personal Trainer" />
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="{% static 'manifest.json' %}" />
+    
+    <!-- iOS Icons -->
+    <link rel="apple-touch-icon" sizes="72x72" href="{% static 'icons/icon-72x72.png' %}" />
+    <link rel="apple-touch-icon" sizes="96x96" href="{% static 'icons/icon-96x96.png' %}" />
+    <link rel="apple-touch-icon" sizes="128x128" href="{% static 'icons/icon-128x128.png' %}" />
+    <link rel="apple-touch-icon" sizes="144x144" href="{% static 'icons/icon-144x144.png' %}" />
+    <link rel="apple-touch-icon" sizes="152x152" href="{% static 'icons/icon-152x152.png' %}" />
+    <link rel="apple-touch-icon" sizes="192x192" href="{% static 'icons/icon-192x192.png' %}" />
+    
+    <title>Finalizar Compra | Personal Trainer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/sales.css' %}">
+    <style>
+        .checkout-page {
+            padding: 100px 0 60px;
+            min-height: 100vh;
+        }
+        .checkout-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .checkout-header h1 {
+            margin-bottom: 12px;
+        }
+        .checkout-header p {
+            color: var(--muted);
+        }
+        .checkout-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 32px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        @media (max-width: 968px) {
+            .checkout-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .checkout-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+        }
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: var(--text);
+        }
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .item-card {
+            display: flex;
+            gap: 16px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        .item-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: rgba(16, 185, 129, 0.1);
+        }
+        .item-info {
+            flex: 1;
+        }
+        .item-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+        .item-category {
+            font-size: 0.875rem;
+            color: var(--muted);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .item-price {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .summary-row:last-child {
+            border-bottom: none;
+            padding-top: 16px;
+            margin-top: 8px;
+            border-top: 2px solid var(--border);
+        }
+        .summary-row.total {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .summary-label {
+            color: var(--muted);
+        }
+        .summary-value {
+            font-weight: 600;
+            color: var(--text);
+        }
+        .summary-row.total .summary-value {
+            color: var(--primary);
+        }
+        .info-box {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 24px;
+        }
+        .info-box h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .info-box p {
+            font-size: 0.875rem;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .btn-group .btn {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar" id="topbar">
+        <div class="container nav-wrap">
+            <a href="{% url 'sales' %}" class="brand">Personal<span>Trainer</span></a>
+            <nav class="nav">
+                <a href="{% url 'produtos:catalogo' %}">Catálogo</a>
+                <a href="{% url 'sales' %}#beneficios">Benefícios</a>
+                <a href="{% url 'sales' %}#servicos">Treinamento</a>
+                <a href="{% url 'sales' %}#faq">FAQ</a>
+            </nav>
+            <div class="nav-actions">
+                <a href="{% url 'carrinho:carrinho_detalhes' %}" class="btn btn-ghost btn-sm">
+                    <i class="fas fa-shopping-cart"></i>
+                </a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'dashboard:home' %}" class="btn btn-ghost btn-sm">
+                    <i class="fas fa-user-circle"></i> Área do Aluno
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main class="checkout-page">
+        <div class="container">
+            <div class="checkout-header">
+                <h1>Finalizar Compra</h1>
+                <p>Revise seus produtos e confirme o pedido</p>
+            </div>
+
+            <div class="checkout-grid">
+                <!-- Produtos -->
+                <div class="checkout-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-shopping-bag"></i> Seus Produtos
+                    </h2>
+                    <div class="item-list">
+                        {% for item in carrinho %}
+                        <div class="item-card">
+                            {% if item.produto.imagem %}
+                            <img src="{{ item.produto.imagem.url }}" alt="{{ item.produto.nome }}" class="item-image">
+                            {% else %}
+                            <div class="item-image"></div>
+                            {% endif %}
+                            <div class="item-info">
+                                <div class="item-name">{{ item.produto.nome }}</div>
+                                <div class="item-category">
+                                    <i class="fas fa-tag"></i>
+                                    {{ item.produto.get_categoria_display }}
+                                </div>
+                                <div class="item-price">R$ {{ item.preco }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="info-box">
+                        <h4>
+                            <i class="fas fa-info-circle"></i>
+                            Produtos Digitais
+                        </h4>
+                        <p>
+                            <strong>Acesso imediato após confirmação do pagamento.</strong><br>
+                            Os produtos ficarão disponíveis na sua Área do Aluno para consulta a qualquer momento.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Resumo e Confirmação -->
+                <div class="checkout-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-receipt"></i> Resumo do Pedido
+                    </h2>
+                    
+                    <div class="summary-row">
+                        <span class="summary-label">Subtotal ({{ carrinho|length }} {% if carrinho|length == 1 %}item{% else %}itens{% endif %})</span>
+                        <span class="summary-value">R$ {{ total }}</span>
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span class="summary-label">Desconto</span>
+                        <span class="summary-value">R$ 0,00</span>
+                    </div>
+                    
+                    <div class="summary-row total">
+                        <span class="summary-label">Total</span>
+                        <span class="summary-value">R$ {{ total }}</span>
+                    </div>
+
+                    <div class="info-box" style="margin-top: 24px; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3);">
+                        <h4 style="color: #3b82f6;">
+                            <i class="fas fa-user"></i>
+                            Dados da compra
+                        </h4>
+                        <p>
+                            <strong>Nome:</strong> {{ user.get_full_name|default:user.email }}<br>
+                            <strong>Email:</strong> {{ user.email }}
+                        </p>
+                    </div>
+
+                    <form method="post" action="{% url 'checkout:processar_pedido' %}">
+                        {% csrf_token %}
+                        <div class="btn-group">
+                            <a href="{% url 'carrinho:carrinho_detalhes' %}" class="btn btn-ghost">
+                                <i class="fas fa-arrow-left"></i> Voltar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check"></i> Confirmar Pedido
+                            </button>
+                        </div>
+                    </form>
+
+                    <p style="font-size: 0.75rem; color: var(--muted); text-align: center; margin-top: 16px;">
+                        Ao confirmar, você concorda com nossos <a href="#" style="color: var(--primary);">termos de uso</a> e <a href="#" style="color: var(--primary);">política de privacidade</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-wrap">
+            <p>© 2026 Personal Trainer. Todos os direitos reservados.</p>
+            <a href="{% url 'sales' %}">Voltar ao início</a>
+        </div>
+    </footer>
+
+    <!-- WhatsApp Float Button -->
+    <a href="https://wa.me/5511999999999" target="_blank" class="whatsapp-float">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+    
+    <script src="{% static 'js/pwa.js' %}"></script>
+</body>
+</html>

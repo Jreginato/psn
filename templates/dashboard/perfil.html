@@ -1,0 +1,302 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}Meu Perfil{% endblock %}
+{% block page_title %}Meu Perfil{% endblock %}
+{% block nav_perfil %}active{% endblock %}
+
+{% block content %}
+<div class="perfil-page">
+    <div class="perfil-card">
+        <div class="perfil-header">
+            <div class="perfil-avatar-large">
+                {{ user.first_name.0|upper|default:'U' }}
+            </div>
+            <div class="perfil-info">
+                <h2>{{ user.first_name }} {{ user.last_name }}</h2>
+                <p>{{ user.email }}</p>
+                {% if user.whatsapp %}
+                <p><i class="fas fa-phone"></i> {{ user.whatsapp }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="perfil-stats">
+            <div class="stat-item">
+                <i class="fas fa-box"></i>
+                <div>
+                    <strong>{{ user.acessos.count }}</strong>
+                    <span>Produtos</span>
+                </div>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-receipt"></i>
+                <div>
+                    <strong>{{ user.pedidos.count }}</strong>
+                    <span>Pedidos</span>
+                </div>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-calendar"></i>
+                <div>
+                    <strong>{{ user.date_joined|date:"M/Y" }}</strong>
+                    <span>Membro desde</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="perfil-sections">
+        <div class="section-card">
+            <h3><i class="fas fa-user"></i> Informações Pessoais</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Nome Completo</span>
+                    <span class="info-value">{{ user.first_name }} {{ user.last_name }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">E-mail</span>
+                    <span class="info-value">{{ user.email }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Usuário</span>
+                    <span class="info-value">{{ user.username }}</span>
+                </div>
+                {% if user.whatsapp %}
+                <div class="info-item">
+                    <span class="info-label">WhatsApp</span>
+                    <span class="info-value">{{ user.whatsapp }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h3><i class="fas fa-cog"></i> Configurações</h3>
+            <div class="config-list">
+                <button class="config-item" disabled>
+                    <div>
+                        <strong>Alterar Senha</strong>
+                        <span>Mantenha sua conta segura</span>
+                    </div>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <button class="config-item" disabled>
+                    <div>
+                        <strong>Notificações</strong>
+                        <span>Configure suas preferências</span>
+                    </div>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <button class="config-item" disabled>
+                    <div>
+                        <strong>Privacidade</strong>
+                        <span>Gerencie seus dados</span>
+                    </div>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            <p class="text-muted"><small>* Funcionalidades em breve</small></p>
+        </div>
+    </div>
+</div>
+
+<style>
+.perfil-page {
+    max-width: 900px;
+}
+
+.perfil-card {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.perfil-header {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 32px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.perfil-avatar-large {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.perfil-info h2 {
+    font-size: 28px;
+    color: #32325d;
+    margin-bottom: 8px;
+}
+
+.perfil-info p {
+    color: #8898aa;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.perfil-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 24px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: #f7fafc;
+    border-radius: 12px;
+}
+
+.stat-item i {
+    font-size: 32px;
+    color: #5e72e4;
+}
+
+.stat-item strong {
+    display: block;
+    font-size: 24px;
+    color: #32325d;
+    margin-bottom: 4px;
+}
+
+.stat-item span {
+    font-size: 14px;
+    color: #8898aa;
+}
+
+.perfil-sections {
+    display: grid;
+    gap: 24px;
+}
+
+.section-card {
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.section-card h3 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 18px;
+    color: #32325d;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.info-grid {
+    display: grid;
+    gap: 20px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.info-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #8898aa;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    font-size: 16px;
+    color: #32325d;
+}
+
+.config-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.config-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: #f7fafc;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: left;
+}
+
+.config-item:hover:not(:disabled) {
+    background: #edf2f7;
+    border-color: #5e72e4;
+}
+
+.config-item:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.config-item strong {
+    display: block;
+    font-size: 15px;
+    color: #32325d;
+    margin-bottom: 4px;
+}
+
+.config-item span {
+    font-size: 13px;
+    color: #8898aa;
+}
+
+.config-item i {
+    color: #8898aa;
+}
+
+.text-muted {
+    color: #8898aa;
+    font-size: 13px;
+}
+
+@media (max-width: 768px) {
+    .perfil-card, .section-card {
+        padding: 20px;
+    }
+    
+    .perfil-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .perfil-info p {
+        justify-content: center;
+    }
+    
+    .perfil-stats {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

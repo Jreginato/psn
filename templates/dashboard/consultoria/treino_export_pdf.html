@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Treino Atual</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 28mm 18mm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            color: #111827;
+            font-size: 12px;
+        }
+        .brand {
+            font-weight: bold;
+            font-size: 18px;
+            letter-spacing: 0.5px;
+        }
+        .brand span {
+            color: #2b7cff;
+        }
+        .meta {
+            margin-top: 8px;
+            color: #6b7280;
+        }
+        .header {
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 12px;
+            margin-bottom: 18px;
+        }
+        .title {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 6px 0 2px;
+        }
+        .subtitle {
+            color: #6b7280;
+            margin: 0 0 8px;
+        }
+        .day {
+            margin: 18px 0 10px;
+        }
+        .day h3 {
+            font-size: 14px;
+            margin: 0 0 6px;
+        }
+        .day p {
+            margin: 0 0 10px;
+            color: #6b7280;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8px;
+        }
+        th, td {
+            border: 1px solid #e5e7eb;
+            padding: 6px 8px;
+            text-align: left;
+        }
+        th {
+            background: #f3f4f6;
+            font-weight: bold;
+        }
+        a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+        .link-muted {
+            color: #6b7280;
+        }
+        .note {
+            font-style: italic;
+            color: #4b5563;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="brand">Personal<span>Trainer</span></div>
+        <div class="meta">Gerado em: {{ gerado_em|date:"d/m/Y H:i" }}</div>
+        <div class="title">{{ treino_atual.titulo }}</div>
+        <div class="subtitle">Aluno: {{ usuario.get_full_name|default:usuario.username }}</div>
+        {% if treino_atual.descricao %}
+            <div class="note">{{ treino_atual.descricao }}</div>
+        {% endif %}
+    </div>
+
+    {% for dia in treino_atual.dias.all %}
+        <div class="day">
+            <h3>{{ dia.nome }}</h3>
+            {% if dia.descricao %}
+                <p>{{ dia.descricao }}</p>
+            {% endif %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Exercicio</th>
+                        <th>Series</th>
+                        <th>Repeticoes</th>
+                        <th>Carga</th>
+                        <th>Descanso</th>
+                        <th>Observacao</th>
+                        <th>Video</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in dia.exercicios.all %}
+                        <tr>
+                            <td>{{ item.exercicio.nome }}</td>
+                            <td>{{ item.series }}</td>
+                            <td>{{ item.repeticoes }}</td>
+                            <td>{{ item.carga|default:"-" }}</td>
+                            <td>{{ item.descanso|default:"-" }}</td>
+                            <td>{{ item.observacao_especifica|default:"-" }}</td>
+                            <td>
+                                {% if item.exercicio.link_video %}
+                                    <a href="{{ item.exercicio.link_video }}" target="_blank">Abrir</a>
+                                {% else %}
+                                    <span class="link-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7">Sem exercicios cadastrados.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% empty %}
+        <p>Nenhum dia cadastrado no treino.</p>
+    {% endfor %}
+</body>
+</html>

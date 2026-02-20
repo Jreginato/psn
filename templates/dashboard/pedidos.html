@@ -1,0 +1,253 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}Meus Pedidos{% endblock %}
+{% block page_title %}Meus Pedidos{% endblock %}
+{% block nav_pedidos %}active{% endblock %}
+
+{% block content %}
+<div class="pedidos-page">
+    {% if pedidos %}
+    <div class="pedidos-list">
+        {% for pedido in pedidos %}
+        <div class="pedido-card">
+            <div class="pedido-header">
+                <div>
+                    <h3>Pedido #{{ pedido.id }}</h3>
+                    <span class="pedido-data">{{ pedido.criado_em|date:"d/m/Y H:i" }}</span>
+                </div>
+                <span class="badge badge-{{ pedido.status }}">
+                    {{ pedido.get_status_display }}
+                </span>
+            </div>
+            
+            <div class="pedido-itens">
+                {% for item in pedido.itens.all %}
+                <div class="pedido-item">
+                    <i class="fas fa-box"></i>
+                    <span>{{ item.nome_produto }}</span>
+                    <strong>R$ {{ item.preco_unitario }}</strong>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="pedido-footer">
+                <div class="pedido-info">
+                    {% if pedido.metodo_pagamento %}
+                    <span><i class="fas fa-credit-card"></i> {{ pedido.metodo_pagamento }}</span>
+                    {% endif %}
+                    {% if pedido.aprovado_em %}
+                    <span><i class="fas fa-check"></i> Aprovado em {{ pedido.aprovado_em|date:"d/m/Y" }}</span>
+                    {% endif %}
+                </div>
+                <div class="pedido-total">
+                    <span>Total:</span>
+                    <strong>R$ {{ pedido.total }}</strong>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-receipt"></i>
+        <h2>Nenhum pedido realizado</h2>
+        <p>Você ainda não realizou nenhuma compra. Explore nosso catálogo!</p>
+        <a href="{% url 'produtos:catalogo' %}" class="btn btn-primary btn-lg">
+            <i class="fas fa-store"></i> Ver Catálogo
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.pedidos-page {
+    max-width: 900px;
+}
+
+.pedidos-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.pedido-card {
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.pedido-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.pedido-header h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #32325d;
+    margin-bottom: 6px;
+}
+
+.pedido-data {
+    font-size: 14px;
+    color: #8898aa;
+}
+
+.badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.badge-pendente {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.badge-processando {
+    background: #cfe2ff;
+    color: #084298;
+}
+
+.badge-aprovado {
+    background: #d1e7dd;
+    color: #0f5132;
+}
+
+.badge-cancelado {
+    background: #f8d7da;
+    color: #842029;
+}
+
+.badge-reembolsado {
+    background: #e2e3e5;
+    color: #41464b;
+}
+
+.pedido-itens {
+    margin-bottom: 20px;
+}
+
+.pedido-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    color: #525f7f;
+}
+
+.pedido-item i {
+    color: #5e72e4;
+    font-size: 18px;
+}
+
+.pedido-item span {
+    flex: 1;
+}
+
+.pedido-item strong {
+    color: #32325d;
+}
+
+.pedido-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.pedido-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pedido-info span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #8898aa;
+}
+
+.pedido-info i {
+    color: #5e72e4;
+}
+
+.pedido-total {
+    text-align: right;
+}
+
+.pedido-total span {
+    display: block;
+    font-size: 13px;
+    color: #8898aa;
+    margin-bottom: 4px;
+}
+
+.pedido-total strong {
+    font-size: 24px;
+    color: #32325d;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.empty-state i {
+    font-size: 80px;
+    color: #dfe3e8;
+    margin-bottom: 24px;
+}
+
+.empty-state h2 {
+    font-size: 28px;
+    color: #32325d;
+    margin-bottom: 12px;
+}
+
+.empty-state p {
+    font-size: 16px;
+    color: #8898aa;
+    margin-bottom: 32px;
+}
+
+.btn-lg {
+    padding: 14px 32px;
+    font-size: 16px;
+}
+
+@media (max-width: 768px) {
+    .pedido-card {
+        padding: 20px;
+    }
+    
+    .pedido-header {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .pedido-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    
+    .pedido-total {
+        width: 100%;
+        text-align: left;
+    }
+}
+</style>
+{% endblock %}

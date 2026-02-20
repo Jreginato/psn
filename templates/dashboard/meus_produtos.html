@@ -1,0 +1,210 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}Meus Produtos{% endblock %}
+{% block page_title %}Meus Produtos{% endblock %}
+{% block nav_produtos %}active{% endblock %}
+
+{% block content %}
+<div class="produtos-page">
+    {% if acessos %}
+    <div class="produtos-grid">
+        {% for acesso in acessos %}
+        <a href="{% url 'dashboard:produto_detalhes' acesso.produto.slug %}" class="produto-card produto-card-link">
+            {% if acesso.produto.imagem_capa %}
+            <img src="{{ acesso.produto.imagem_capa.url }}" alt="{{ acesso.produto.nome }}" class="produto-img">
+            {% else %}
+            <div class="produto-img-placeholder">
+                <i class="fas {{ acesso.produto.categoria.icone|default:'fa-box' }}"></i>
+            </div>
+            {% endif %}
+            <div class="produto-info">
+                <div class="produto-meta">
+                    <span class="produto-categoria">
+                        <i class="fas {{ acesso.produto.categoria.icone|default:'fa-box' }}"></i>
+                        {{ acesso.produto.categoria.nome }}
+                    </span>
+                    <span class="produto-data">{{ acesso.liberado_em|date:"d/m/Y" }}</span>
+                </div>
+                <h3>{{ acesso.produto.nome }}</h3>
+                <p>{{ acesso.produto.subtitulo_hero|default:"" }}</p>
+                
+                <div class="produto-stats">
+                    <span><i class="fas fa-eye"></i> {{ acesso.total_acessos }} acessos</span>
+                    {% if acesso.ultimo_acesso %}
+                    <span><i class="fas fa-clock"></i> {{ acesso.ultimo_acesso|timesince }} atrás</span>
+                    {% endif %}
+                </div>
+                
+                <span class="btn btn-primary btn-block">
+                    <i class="fas fa-play"></i> Acessar Conteúdo
+                </span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-shopping-bag"></i>
+        <h2>Você ainda não possui produtos</h2>
+        <p>Explore nosso catálogo e adquira produtos incríveis para sua evolução!</p>
+        <a href="{% url 'produtos:catalogo' %}" class="btn btn-primary btn-lg">
+            <i class="fas fa-store"></i> Ir para o Catálogo
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.produtos-page {
+    max-width: 1200px;
+}
+
+.produtos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 28px;
+}
+
+.produto-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+}
+
+.produto-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.produto-card:hover {
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+    transform: translateY(-6px);
+}
+
+.produto-img, .produto-img-placeholder {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.produto-img-placeholder {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 56px;
+}
+
+.produto-info {
+    padding: 24px;
+}
+
+.produto-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.produto-categoria {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #5e72e4;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.produto-data {
+    font-size: 13px;
+    color: #8898aa;
+}
+
+.produto-info h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #32325d;
+    margin-bottom: 12px;
+    line-height: 1.3;
+}
+
+.produto-info p {
+    font-size: 14px;
+    color: #8898aa;
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+.produto-stats {
+    display: flex;
+    gap: 16px;
+    padding: 12px 0;
+    margin-bottom: 16px;
+    border-top: 1px solid #e9ecef;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.produto-stats span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #8898aa;
+}
+
+.produto-stats i {
+    color: #5e72e4;
+}
+
+.btn-block {
+    width: 100%;
+    justify-content: center;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.empty-state i {
+    font-size: 80px;
+    color: #dfe3e8;
+    margin-bottom: 24px;
+}
+
+.empty-state h2 {
+    font-size: 28px;
+    color: #32325d;
+    margin-bottom: 12px;
+}
+
+.empty-state p {
+    font-size: 16px;
+    color: #8898aa;
+    margin-bottom: 32px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.btn-lg {
+    padding: 14px 32px;
+    font-size: 16px;
+}
+
+@media (max-width: 768px) {
+    .produtos-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

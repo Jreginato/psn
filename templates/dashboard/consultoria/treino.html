@@ -1,0 +1,446 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}Meu Treino - Consultoria Online{% endblock %}
+{% block page_title %}Meu Treino{% endblock %}
+
+{% block content %}
+<div class="consultoria-content">
+    <div class="consultoria-header">
+        <div class="titulo-wrap">
+            <div class="titulo-acento"></div>
+            <div>
+                <h2>Treino Atual</h2>
+                <p class="ultima-atualizacao">
+                    <i class="fas fa-clock"></i> Ultima atualizacao: {{ consultoria.data_atualizacao|date:"d/m/Y às H:i" }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    {% if treino_atual %}
+        <div class="treino-card">
+            <div class="treino-topo">
+                <div>
+                    <h3>{{ treino_atual.titulo }}</h3>
+                    {% if treino_atual.descricao %}
+                        <p class="treino-descricao">{{ treino_atual.descricao }}</p>
+                    {% endif %}
+                </div>
+                <div class="treino-acoes">
+                    <a href="{% url 'dashboard:consultoria_treino_pdf' %}" class="btn-acao" target="_blank">
+                        <i class="fas fa-file-pdf"></i> Exportar PDF
+                    </a>
+                    <a href="{% url 'dashboard:consultoria_treino_excel' %}" class="btn-acao btn-excel">
+                        <i class="fas fa-file-excel"></i> Exportar Excel
+                    </a>
+                    {% if treino_atual.arquivo_pdf %}
+                        <a href="{{ treino_atual.arquivo_pdf.url }}" class="btn-visualizar" target="_blank">
+                            <i class="fas fa-file-pdf"></i> Ver PDF
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="dias-lista">
+                {% for dia in treino_atual.dias.all %}
+                    <div class="dia-card">
+                        <div class="dia-header">
+                            <div class="dia-badge">{{ forloop.counter }}</div>
+                            <div class="dia-info">
+                                <h4>{{ dia.nome }}</h4>
+                                {% if dia.descricao %}
+                                    <p>{{ dia.descricao }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="exercicios-lista">
+                            {% for item in dia.exercicios.all %}
+                                <div class="exercicio-card">
+                                    <div class="exercicio-header">
+                                        <h5>{{ item.exercicio.nome }}</h5>
+                                        <div class="tags">
+                                            {% if item.exercicio.grupo_muscular %}
+                                                <span class="tag tag-grupo">{{ item.exercicio.grupo_muscular }}</span>
+                                            {% endif %}
+                                            <span class="tag tag-serie">{{ item.series }}x{{ item.repeticoes }}</span>
+                                            {% if item.descanso %}
+                                                <span class="tag tag-descanso">Descanso {{ item.descanso }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <div class="exercicio-detalhes">
+                                        {% if item.carga %}
+                                            <div><strong>Carga:</strong> {{ item.carga }}</div>
+                                        {% endif %}
+                                    </div>
+
+                                    {% if item.exercicio.descricao %}
+                                        <p class="exercicio-descricao">{{ item.exercicio.descricao }}</p>
+                                    {% endif %}
+
+                                    {% if item.observacao_especifica %}
+                                        <p class="exercicio-observacao">{{ item.observacao_especifica }}</p>
+                                    {% endif %}
+
+                                    {% if item.exercicio.link_video %}
+                                        <a href="{{ item.exercicio.link_video }}" class="btn-video" target="_blank">
+                                            <i class="fas fa-play"></i> Ver demonstracao
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            {% empty %}
+                                <div class="consultoria-vazio">
+                                    <i class="fas fa-dumbbell"></i>
+                                    <h3>Dia sem exercicios</h3>
+                                    <p>O seu personal vai adicionar os exercicios em breve.</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="consultoria-vazio">
+                        <i class="fas fa-dumbbell"></i>
+                        <h3>Treino sem dias cadastrados</h3>
+                        <p>O seu personal vai adicionar os dias e exercicios em breve.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% else %}
+        <div class="consultoria-vazio">
+            <i class="fas fa-dumbbell"></i>
+            <h3>Nenhum treino atual</h3>
+            <p>Seu treino sera disponibilizado em breve pelo seu personal trainer.</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap');
+
+:root {
+    --accent: #45d1a8;
+    --accent-2: #ffb266;
+    --bg-deep: #0f151c;
+    --panel: #151d26;
+    --panel-2: #111924;
+    --ink: #eaf2f6;
+    --muted: #9aa6b2;
+    --stroke: rgba(255,255,255,0.08);
+}
+
+.consultoria-content {
+    padding: 24px;
+    color: var(--ink);
+}
+
+.consultoria-header {
+    margin-bottom: 24px;
+}
+
+.titulo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.titulo-acento {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: linear-gradient(140deg, var(--accent), #2b7cff);
+    box-shadow: 0 8px 20px rgba(69, 209, 168, 0.3);
+}
+
+.consultoria-header h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 30px;
+    margin-bottom: 8px;
+    color: #0f172a;
+}
+
+.ultima-atualizacao {
+    color: #475569;
+    font-size: 14px;
+}
+
+.treino-card {
+    background: radial-gradient(120% 120% at 10% 0%, rgba(69, 209, 168, 0.08), transparent 50%),
+        #111924;
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid var(--stroke);
+    color: var(--ink);
+}
+
+.treino-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.treino-topo h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 24px;
+    margin-bottom: 6px;
+    color: var(--ink);
+}
+
+.treino-descricao {
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.btn-visualizar {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, var(--accent), #2b7cff);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.treino-acoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.btn-acao {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--ink);
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    border: 1px solid var(--stroke);
+    transition: all 0.3s;
+}
+
+.btn-acao:hover {
+    background: rgba(255, 255, 255, 0.16);
+    transform: translateY(-1px);
+}
+
+.btn-excel {
+    border-color: rgba(69, 209, 168, 0.4);
+}
+
+.btn-visualizar:hover {
+    filter: brightness(1.05);
+    transform: translateY(-2px);
+}
+
+.dias-lista {
+    display: grid;
+    gap: 20px;
+}
+
+.dia-card {
+    background: var(--panel-2);
+    border: 1px solid var(--stroke);
+    border-radius: 14px;
+    padding: 18px 18px 20px;
+    position: relative;
+    overflow: hidden;
+    animation: rise 0.5s ease both;
+}
+
+.dia-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle, rgba(255,178,102,0.18), transparent 70%);
+    opacity: 0.8;
+}
+
+.dia-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 1;
+}
+
+.dia-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(69, 209, 168, 0.16);
+    color: var(--accent);
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.dia-info h4 {
+    font-size: 18px;
+    margin-bottom: 6px;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.dia-info p {
+    color: var(--muted);
+    margin: 0;
+}
+
+.exercicios-lista {
+    display: grid;
+    gap: 14px;
+}
+
+.exercicio-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--stroke);
+    border-radius: 12px;
+    padding: 16px;
+    position: relative;
+}
+
+.exercicio-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.exercicio-header h5 {
+    font-size: 16px;
+    font-family: 'Space Grotesk', sans-serif;
+    margin: 0;
+}
+
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.tag {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.tag-grupo {
+    background: rgba(69, 209, 168, 0.16);
+    color: var(--accent);
+}
+
+.tag-serie {
+    background: rgba(43, 124, 255, 0.16);
+    color: #7fb1ff;
+}
+
+.tag-descanso {
+    background: rgba(255, 178, 102, 0.16);
+    color: var(--accent-2);
+}
+
+.exercicio-detalhes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px 16px;
+    margin-bottom: 10px;
+    color: var(--ink);
+}
+
+.exercicio-descricao {
+    color: var(--muted);
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+
+.exercicio-observacao {
+    color: #9fdcff;
+    margin-bottom: 8px;
+}
+
+.btn-video {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--ink);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+.btn-video:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.consultoria-vazio {
+    text-align: center;
+    padding: 60px 24px;
+    background: var(--panel);
+    border-radius: 14px;
+    border: 1px dashed var(--stroke);
+}
+
+.consultoria-vazio i {
+    font-size: 56px;
+    color: var(--stroke);
+    margin-bottom: 20px;
+}
+
+.consultoria-vazio h3 {
+    font-size: 22px;
+    margin-bottom: 10px;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.consultoria-vazio p {
+    color: var(--muted);
+}
+
+@keyframes rise {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dia-card:nth-child(2) { animation-delay: 0.05s; }
+.dia-card:nth-child(3) { animation-delay: 0.1s; }
+.dia-card:nth-child(4) { animation-delay: 0.15s; }
+
+@media (max-width: 768px) {
+    .treino-topo {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .titulo-wrap {
+        align-items: flex-start;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,259 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#10b981" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Personal Trainer" />
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="{% static 'manifest.json' %}" />
+    
+    <!-- iOS Icons -->
+    <link rel="apple-touch-icon" sizes="72x72" href="{% static 'icons/icon-72x72.png' %}" />
+    <link rel="apple-touch-icon" sizes="96x96" href="{% static 'icons/icon-96x96.png' %}" />
+    <link rel="apple-touch-icon" sizes="128x128" href="{% static 'icons/icon-128x128.png' %}" />
+    <link rel="apple-touch-icon" sizes="144x144" href="{% static 'icons/icon-144x144.png' %}" />
+    <link rel="apple-touch-icon" sizes="152x152" href="{% static 'icons/icon-152x152.png' %}" />
+    <link rel="apple-touch-icon" sizes="192x192" href="{% static 'icons/icon-192x192.png' %}" />
+    
+    <title>Catálogo de Produtos | Personal Trainer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/sales.css' %}">
+    <style>
+        .catalogo-page {
+            padding: 100px 0 60px;
+            min-height: 100vh;
+        }
+        .catalogo-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .catalogo-header h1 {
+            font-size: 42px;
+            margin-bottom: 16px;
+        }
+        .categorias-filter {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 48px;
+        }
+        .cat-btn {
+            padding: 12px 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .cat-btn:hover, .cat-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .produtos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 32px;
+            margin-bottom: 40px;
+        }
+        .produto-card {
+            background: var(--surface);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s;
+            border: 1px solid var(--border);
+        }
+        .produto-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 28px rgba(51, 212, 255, 0.2);
+        }
+        .produto-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .produto-content {
+            padding: 24px;
+        }
+        .produto-categoria {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+        .produto-nome {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text);
+        }
+        .produto-descricao {
+            color: var(--muted);
+            font-size: 14px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        .produto-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .produto-preco {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .produto-preco-old {
+            font-size: 18px;
+            color: var(--muted);
+            text-decoration: line-through;
+            display: block;
+        }
+        .empty-catalogo {
+            text-align: center;
+            padding: 80px 20px;
+        }
+        .empty-catalogo i {
+            font-size: 80px;
+            color: var(--muted);
+            opacity: 0.5;
+            margin-bottom: 24px;
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar" id="topbar">
+        <div class="container nav-wrap">
+            <a href="{% url 'sales' %}" class="brand">Personal<span>Trainer</span></a>
+            <nav class="nav">
+                <a href="{% url 'produtos:catalogo' %}">Catálogo</a>
+                <a href="{% url 'sales' %}#beneficios">Benefícios</a>
+                <a href="{% url 'sales' %}#servicos">Treinamento</a>
+                <a href="{% url 'sales' %}#faq">FAQ</a>
+            </nav>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <a href="{% url 'carrinho:carrinho_detalhes' %}" class="btn btn-ghost btn-sm" style="position: relative;">
+                    <i class="fas fa-shopping-cart"></i>
+                    {% if carrinho|length > 0 %}
+                        <span style="position: absolute; top: -5px; right: -5px; background: var(--primary); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: bold;">{{ carrinho|length }}</span>
+                    {% endif %}
+                </a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'dashboard:home' %}" class="btn btn-primary btn-sm"><i class="fas fa-user-circle"></i> Área do Aluno</a>
+                {% else %}
+                <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-sm"><i class="fas fa-sign-in-alt"></i> Entrar</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main class="catalogo-page">
+        <div class="container">
+            <div class="catalogo-header">
+                <h1>Catálogo de Produtos Digitais</h1>
+                <p style="color: var(--muted); font-size: 18px;">Escolha os produtos perfeitos para sua evolução</p>
+            </div>
+
+            {% if categorias %}
+            <div class="categorias-filter">
+                <a href="{% url 'produtos:catalogo' %}" class="cat-btn {% if not categoria_atual %}active{% endif %}">
+                    <i class="fas fa-th"></i> Todos
+                </a>
+                {% for cat in categorias %}
+                <a href="?categoria={{ cat.slug }}" class="cat-btn {% if categoria_atual == cat.slug %}active{% endif %}">
+                    <i class="fas {{ cat.icone|default:'fa-box' }}"></i> {{ cat.nome }}
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if produtos %}
+            <div class="produtos-grid">
+                {% for produto in produtos %}
+                <div class="produto-card">
+                    {% if produto.imagem_capa %}
+                    <img src="{{ produto.imagem_capa.url }}" alt="{{ produto.titulo_hero|default:produto.nome }}" class="produto-img">
+                    {% else %}
+                    <div class="produto-img"></div>
+                    {% endif %}
+                    <div class="produto-content">
+                        <span class="produto-categoria">
+                            <i class="fas {{ produto.categoria.icone|default:'fa-box' }}"></i>
+                            {{ produto.categoria.nome }}
+                        </span>
+                        <h3 class="produto-nome">{{ produto.titulo_hero|default:produto.nome }}</h3>
+                        <p class="produto-descricao">{{ produto.subtitulo_hero|default:""|truncatewords:20 }}</p>
+                        <div class="produto-footer">
+                            <div>
+                                {% if produto.preco_promocional %}
+                                <span class="produto-preco-old">R$ {{ produto.preco|floatformat:2 }}</span>
+                                <div class="produto-preco">R$ {{ produto.preco_promocional|floatformat:2 }}</div>
+                                {% else %}
+                                <div class="produto-preco">R$ {{ produto.preco|floatformat:2 }}</div>
+                                {% endif %}
+                            </div>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <form method="post" action="{% url 'carrinho:carrinho_add' produto.id %}" style="margin: 0;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary" style="white-space: nowrap;">
+                                        <i class="fas fa-cart-plus"></i> Adicionar
+                                    </button>
+                                </form>
+                                <a href="{% url 'produtos:produto_vendas' produto.slug %}" class="btn btn-ghost" style="white-space: nowrap;">
+                                    Ver Detalhes
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-catalogo">
+                <i class="fas fa-box-open"></i>
+                <h2>Nenhum produto encontrado</h2>
+                <p style="color: var(--muted);">Em breve teremos produtos incríveis para você!</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-wrap">
+            <p>© 2026 Personal Trainer. Todos os direitos reservados.</p>
+            <div class="social-links">
+                <a href="https://instagram.com" target="_blank" class="social-link"><i class="fab fa-instagram"></i></a>
+                <a href="https://youtube.com" target="_blank" class="social-link"><i class="fab fa-youtube"></i></a>
+                <a href="https://facebook.com" target="_blank" class="social-link"><i class="fab fa-facebook"></i></a>
+            </div>
+            <a href="#top">Voltar ao topo</a>
+        </div>
+    </footer>
+
+    <a href="https://wa.me/5511999999999" target="_blank" class="whatsapp-float">
+        <i class="fab fa-whatsapp" style="font-size: 32px;"></i>
+    </a>
+
+    <script src="{% static 'js/sales.js' %}"></script>
+    <script src="{% static 'js/pwa.js' %}"></script>
+</body>
+</html>

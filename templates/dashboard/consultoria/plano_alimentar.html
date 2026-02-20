@@ -1,0 +1,158 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}Meu Plano Alimentar - Consultoria Online{% endblock %}
+{% block page_title %}Meu Plano Alimentar{% endblock %}
+
+{% block content %}
+<div class="consultoria-content">
+    <div class="consultoria-header">
+        <h2>Plano Alimentar Personalizado</h2>
+        <p class="ultima-atualizacao">
+            <i class="fas fa-clock"></i> Última atualização: {{ consultoria.data_atualizacao|date:"d/m/Y às H:i" }}
+        </p>
+    </div>
+
+    {% if consultoria.plano_alimentar_arquivo or consultoria.plano_alimentar_texto %}
+        <div class="consultoria-card">
+            {% if consultoria.plano_alimentar_texto %}
+                <div class="consultoria-texto">
+                    <h3><i class="fas fa-utensils"></i> Descrição do Plano Alimentar</h3>
+                    <div class="texto-content">
+                        {{ consultoria.plano_alimentar_texto|linebreaks }}
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if consultoria.plano_alimentar_arquivo %}
+                <div class="consultoria-arquivo">
+                    <h3><i class="fas fa-file-pdf"></i> Arquivo do Plano Alimentar</h3>
+                    <a href="{{ consultoria.plano_alimentar_arquivo.url }}" class="btn-download" download>
+                        <i class="fas fa-download"></i> Baixar Plano
+                    </a>
+                    <a href="{{ consultoria.plano_alimentar_arquivo.url }}" class="btn-visualizar" target="_blank">
+                        <i class="fas fa-eye"></i> Visualizar
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="consultoria-vazio">
+            <i class="fas fa-utensils"></i>
+            <h3>Nenhum plano alimentar disponível</h3>
+            <p>Seu plano alimentar será disponibilizado em breve pelo seu nutricionista.</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.consultoria-content {
+    padding: 24px;
+}
+
+.consultoria-header {
+    margin-bottom: 32px;
+}
+
+.consultoria-header h2 {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.ultima-atualizacao {
+    color: var(--text-secondary, #888);
+    font-size: 14px;
+}
+
+.ultima-atualizacao i {
+    margin-right: 6px;
+}
+
+.consultoria-card {
+    background: var(--surface, #1e2530);
+    border-radius: 12px;
+    padding: 32px;
+    border: 1px solid var(--border, rgba(255,255,255,0.1));
+}
+
+.consultoria-texto {
+    margin-bottom: 32px;
+}
+
+.consultoria-texto h3 {
+    font-size: 20px;
+    margin-bottom: 16px;
+    color: var(--primary, #33d4ff);
+}
+
+.consultoria-texto h3 i {
+    margin-right: 8px;
+}
+
+.texto-content {
+    line-height: 1.8;
+    color: var(--text, #fff);
+}
+
+.consultoria-arquivo {
+    padding-top: 24px;
+    border-top: 1px solid var(--border, rgba(255,255,255,0.1));
+}
+
+.consultoria-arquivo h3 {
+    font-size: 20px;
+    margin-bottom: 16px;
+    color: var(--primary, #33d4ff);
+}
+
+.consultoria-arquivo h3 i {
+    margin-right: 8px;
+}
+
+.btn-download,
+.btn-visualizar {
+    display: inline-block;
+    padding: 12px 24px;
+    background: var(--primary, #33d4ff);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    margin-right: 12px;
+    transition: all 0.3s;
+}
+
+.btn-download:hover,
+.btn-visualizar:hover {
+    background: var(--primary-dark, #0fb7e5);
+    transform: translateY(-2px);
+}
+
+.btn-download i,
+.btn-visualizar i {
+    margin-right: 8px;
+}
+
+.consultoria-vazio {
+    text-align: center;
+    padding: 80px 24px;
+    background: var(--surface, #1e2530);
+    border-radius: 12px;
+    border: 1px dashed var(--border, rgba(255,255,255,0.2));
+}
+
+.consultoria-vazio i {
+    font-size: 64px;
+    color: var(--border, rgba(255,255,255,0.2));
+    margin-bottom: 24px;
+}
+
+.consultoria-vazio h3 {
+    font-size: 24px;
+    margin-bottom: 12px;
+}
+
+.consultoria-vazio p {
+    color: var(--text-secondary, #888);
+}
+</style>
+{% endblock %}
