@@ -196,20 +196,20 @@ CART_SESSION_ID = 'carrinho'
 
 if IS_PRODUCTION:
     # ===== PRODUÇÃO =====
-    # Suas credenciais de PRODUÇÃO do Mercado Pago
-    MERCADOPAGO_ACCESS_TOKEN = os.environ.get('MP_ACCESS_TOKEN_PROD', 'APP-USR-SEU_TOKEN_PRODUCAO')
-    MERCADOPAGO_PUBLIC_KEY = os.environ.get('MP_PUBLIC_KEY_PROD', 'APP-USR-SUA_KEY_PRODUCAO')
+    MERCADOPAGO_ACCESS_TOKEN = os.environ.get('MP_ACCESS_TOKEN_PROD', '')
+    MERCADOPAGO_PUBLIC_KEY = os.environ.get('MP_PUBLIC_KEY_PROD', '')
+    print(f"[MP] PROD: ACCESS_TOKEN={MERCADOPAGO_ACCESS_TOKEN[:12]}... PUBLIC_KEY={MERCADOPAGO_PUBLIC_KEY[:12]}...")
     MERCADOPAGO_MODE = 'prod'
-    MERCADOPAGO_TEST_ONLY = False  # Modo convidado ativo
+    MERCADOPAGO_TEST_ONLY = False
     MERCADOPAGO_CHECKOUT_POINT = 'init_point'
-    MERCADOPAGO_INCLUDE_PAYER = True  # Incluir dados do comprador
+    MERCADOPAGO_INCLUDE_PAYER = True
 else:
     # ===== DESENVOLVIMENTO =====
-    # Suas credenciais de TESTE do Mercado Pago
-    MERCADOPAGO_ACCESS_TOKEN = os.environ.get('MP_ACCESS_TOKEN_TEST', 'TEST-SEU_TOKEN_TESTE')
-    MERCADOPAGO_PUBLIC_KEY = os.environ.get('MP_PUBLIC_KEY_TEST', 'TEST-SUA_KEY_TESTE')
+    MERCADOPAGO_ACCESS_TOKEN = os.environ.get('MP_ACCESS_TOKEN_TEST', '')
+    MERCADOPAGO_PUBLIC_KEY = os.environ.get('MP_PUBLIC_KEY_TEST', '')
+    print(f"[MP] DEV: ACCESS_TOKEN={MERCADOPAGO_ACCESS_TOKEN[:12]}... PUBLIC_KEY={MERCADOPAGO_PUBLIC_KEY[:12]}...")
     MERCADOPAGO_MODE = 'test'
-    MERCADOPAGO_TEST_ONLY = True  # Login obrigatório
+    MERCADOPAGO_TEST_ONLY = True
     MERCADOPAGO_CHECKOUT_POINT = 'sandbox_init_point'
     MERCADOPAGO_INCLUDE_PAYER = False
 
