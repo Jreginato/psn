@@ -10,22 +10,48 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+# =============================================================================
+# ENVIRONMENT - Determina se está em DESENVOLVIMENTO ou PRODUÇÃO
+# =============================================================================
+# Para mudar o ambiente, defina a variável de ambiente DJANGO_ENV:
+# - 'production' = Modo Produção (PythonAnywhere, etc)
+# - 'development' = Modo Desenvolvimento (padrão)
+#
+# No PythonAnywhere: adicione no arquivo .env ou defina direto no WSGI
+# Localmente: deixe sem definir ou defina DJANGO_ENV=development
+# =============================================================================
+
+ENVIRONMENT = os.environ.get('DJANGO_ENV', 'development')
+IS_PRODUCTION = ENVIRONMENT == 'production'
+IS_DEVELOPMENT = not IS_PRODUCTION
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'TROQUE-ESTA-SECRET-KEY-POR-UMA-UNICA-E-SEGURA'
+if IS_PRODUCTION:
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'TROQUE-ESTA-SECRET-KEY-POR-UMA-UNICA-E-SEGURA')
+else:
+    SECRET_KEY = 'TROQUE-ESTA-SECRET-KEY-POR-UMA-UNICA-E-SEGURA'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = IS_DEVELOPMENT
 
-ALLOWED_HOSTS = []
+# Hosts permitidos
+if IS_PRODUCTION:
+    ALLOWED_HOSTS = [
+        os.environ.get('ALLOWED_HOST', 'seusite.pythonanywhere.com'),
+        'www.' + os.environ.get('ALLOWED_HOST', 'seusite.pythonanywhere.com'),
+    ]
+else:
+    ALLOWED_HOSTS = ['*']  # Permite qualquer host em desenvolvimento
 
 
 # Application definition
@@ -79,6 +105,7 @@ WSGI_APPLICATION = 'personal.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+# SQLite em todos os ambientes (dev e prod)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -128,6 +155,12 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
+# STATIC_ROOT é necessário para produção (collectstatic)
+if IS_PRODUCTION:
+    STATIC_ROOT = BASE_DIR / 'staticfiles'
+else:
+    STATIC_ROOT = None  # Não necessário em desenvolvimento
+
 # Media files (Uploads)
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -144,44 +177,76 @@ LOGOUT_REDIRECT_URL = 'sales'
 CART_SESSION_ID = 'carrinho'
 
 # =============================================================================
-# MERCADO PAGO - CONFIGURAÇÃO
+# MERCADO PAGO - CONFIGURAÇÃO AUTOMÁTICA POR AMBIENTE
 # =============================================================================
-# Para TESTE: use credenciais de teste, TEST_ONLY=True, login obrigatório
-# Para PRODUÇÃO: use credenciais de produção, TEST_ONLY=False, modo convidado ativo
+# As configurações mudam automaticamente baseadas na variável ENVIRONMENT
+#
+# DESENVOLVIMENTO (DJANGO_ENV != 'production'):
+# - Usa credenciais de TESTE
+# - Modo sandbox
+# - Login obrigatório
+# 
+# PRODUÇÃO (DJANGO_ENV = 'production'):
+# - Usa credenciais de PRODUÇÃO
+# - Modo produção
+# - Modo convidado ativo
+# =============================================================================
 
-MERCADOPAGO_ACCESS_TOKEN = 'SEU_ACCESS_TOKEN_AQUI'  # Copie de "Credenciais de teste" ou "Credenciais de produção"
-MERCADOPAGO_PUBLIC_KEY = 'SUA_PUBLIC_KEY_AQUI'  # Copie da mesma seção do painel
-MERCADOPAGO_MODE = 'test'  # 'test' ou 'prod'
-MERCADOPAGO_TEST_ONLY = True  # True = somente teste (login obrigatório) | False = produção (modo convidado)
-MERCADOPAGO_CHECKOUT_POINT = 'init_point'  # init_point (recomendado) | sandbox_init_point | auto
-MERCADOPAGO_INCLUDE_PAYER = False  # Em produção (TEST_ONLY=False), payer é incluído automaticamente
+if IS_PRODUCTION:
+    # ===== PRODUÇÃO =====
+    # Suas credenciais de PRODUÇÃO do Mercado Pago
+    MERCADOPAGO_ACCESS_TOKEN = os.environ.get('MP_ACCESS_TOKEN_PROD', 'APP-USR-SEU_TOKEN_PRODUCAO')
+    MERCADOPAGO_PUBLIC_KEY = os.environ.get('MP_PUBLIC_KEY_PROD', 'APP-USR-SUA_KEY_PRODUCAO')
+    MERCADOPAGO_MODE = 'prod'
+    MERCADOPAGO_TEST_ONLY = False  # Modo convidado ativo
+    MERCADOPAGO_CHECKOUT_POINT = 'init_point'
+    MERCADOPAGO_INCLUDE_PAYER = True  # Incluir dados do comprador
+else:
+    # ===== DESENVOLVIMENTO =====
+    # Suas credenciais de TESTE do Mercado Pago
+    MERCADOPAGO_ACCESS_TOKEN = os.environ.get('MP_ACCESS_TOKEN_TEST', 'TEST-SEU_TOKEN_TESTE')
+    MERCADOPAGO_PUBLIC_KEY = os.environ.get('MP_PUBLIC_KEY_TEST', 'TEST-SUA_KEY_TESTE')
+    MERCADOPAGO_MODE = 'test'
+    MERCADOPAGO_TEST_ONLY = True  # Login obrigatório
+    MERCADOPAGO_CHECKOUT_POINT = 'sandbox_init_point'
+    MERCADOPAGO_INCLUDE_PAYER = False
+
+# Configurações comuns
 MERCADOPAGO_PAYER_EMAIL_OVERRIDE = ''  # Deixe vazio para usar email do usuário logado
 MERCADOPAGO_STATEMENT_DESCRIPTOR = 'PERSONAL TRAINER'  # Aparece na fatura do cartão (max 13 chars alfanum)
 
 # =============================================================================
-# CONFIGURAÇÕES DE SEGURANÇA - PRODUÇÃO
+# CONFIGURAÇÕES DE SEGURANÇA - AUTOMÁTICAS POR AMBIENTE
 # =============================================================================
-# Descomente estas configurações quando for para produção (HTTPS)
+# Em PRODUÇÃO, estas configurações são ativadas automaticamente
+# Em DESENVOLVIMENTO, ficam desativadas para facilitar testes locais
+# =============================================================================
 
-# HTTPS obrigatório (descomente em produção)
-# SECURE_SSL_REDIRECT = True
-# SESSION_COOKIE_SECURE = True
-# CSRF_COOKIE_SECURE = True
-
-# Proteção contra clickjacking
-# X_FRAME_OPTIONS = 'DENY'
-
-# Prevenir MIME-type sniffing
-# SECURE_CONTENT_TYPE_NOSNIFF = True
-
-# Forçar HTTPS por 1 ano (HSTS)
-# SECURE_HSTS_SECONDS = 31536000
-# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-# SECURE_HSTS_PRELOAD = True
-
-# Cookies com SameSite
-# SESSION_COOKIE_SAMESITE = 'Lax'
-# CSRF_COOKIE_SAMESITE = 'Lax'
+if IS_PRODUCTION:
+    # HTTPS obrigatório (PythonAnywhere suporta HTTPS gratuito)
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    
+    # Proteção contra clickjacking
+    X_FRAME_OPTIONS = 'DENY'
+    
+    # Prevenir MIME-type sniffing
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    
+    # Forçar HTTPS por 1 ano (HSTS)
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # Cookies com SameSite
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_SAMESITE = 'Lax'
+else:
+    # Desenvolvimento: sem restrições de segurança
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
 
 # =============================================================================
 # LOGGING - Monitoramento de Segurança
