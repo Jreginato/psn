@@ -13,6 +13,9 @@ urlpatterns = [
     # Processar pedido e redirecionar para Mercado Pago
     path('processar/', views.processar_pedido, name='processar_pedido'),
     
+    # Fallback de redirecionamento para Mercado Pago
+    path('redirect-fallback/', views.redirect_fallback, name='redirect_fallback'),
+    
     # URLs de retorno do Mercado Pago
     path('sucesso/<int:pedido_id>/', views.pagamento_sucesso, name='pagamento_sucesso'),
     path('falha/<int:pedido_id>/', views.pagamento_falha, name='pagamento_falha'),
@@ -21,3 +24,4 @@ urlpatterns = [
     # Webhook do Mercado Pago
     path('webhook/', views.webhook, name='webhook'),
 ]
+

@@ -219,7 +219,30 @@ def processar_pedido(request):
     print(f"MP_ENV_DIAGNOSTIC={json.dumps(env_diag, ensure_ascii=False, default=str)}")
     
     # URLs de retorno
-    base_url = request.build_absolute_uri('/')[:-1]
+    base_url = getattr(settings, 'MERCADOPAGO_BASE_URL', '').strip()
+    if base_url:
+        base_url = base_url.rstrip('/')
+    else:
+        base_url = request.build_absolute_uri('/')[:-1]
+    
+    # Validação: se base_url vir vazio, usa fallback
+    if not base_url or base_url in ('http://', 'https://'):
+        if settings.DEBUG:
+            base_url = 'http://localhost:8000'
+        else:
+            # Em produção, pega do ALLOWED_HOSTS
+            host = settings.ALLOWED_HOSTS[0] if settings.ALLOWED_HOSTS else 'localhost'
+            protocol = 'https' if not settings.DEBUG else 'http'
+            base_url = f'{protocol}://{host}'
+    
+    # GARANTIR QUE base_url NÃO ESTÁ VAZIO ANTES DE USAR NOS URLS
+    if not base_url or base_url.strip() == '':
+        base_url = 'http://localhost:8000'
+    
+    logger.warning(f'BASE_URL construído: {base_url}')
+    print(f"\nBASE_URL FINAL: {base_url}")
+    print(f"DEBUG: {settings.DEBUG}")
+    print(f"REQUEST BUILD ABSOLUTE URI: {request.build_absolute_uri('/')}\n")
 
     # Em produção (não test_only), incluir payer para modo convidado
     include_payer = getattr(settings, 'MERCADOPAGO_INCLUDE_PAYER', False)
@@ -241,8 +264,6 @@ def processar_pedido(request):
             "surname": last_name,
         }
     
-    is_local_callback = 'localhost' in base_url or '127.0.0.1' in base_url
-
     # Cria preferência de pagamento
     statement_descriptor = _normalizar_statement_descriptor(
         getattr(settings, 'MERCADOPAGO_STATEMENT_DESCRIPTOR', 'PERSONAL TRAINER')
@@ -251,24 +272,36 @@ def processar_pedido(request):
     preference_data = {
         "items": items_mp,
         "back_urls": {
-            "success": f"{base_url}{reverse('checkout:pagamento_sucesso', args=[pedido.id])}",
-            "failure": f"{base_url}{reverse('checkout:pagamento_falha', args=[pedido.id])}",
-            "pending": f"{base_url}{reverse('checkout:pagamento_pendente', args=[pedido.id])}",
+            "success": f"{base_url}/checkout/sucesso/{pedido.id}/",
+            "failure": f"{base_url}/checkout/falha/{pedido.id}/",
+            "pending": f"{base_url}/checkout/pendente/{pedido.id}/",
         },
-        "notification_url": f"{base_url}{reverse('checkout:webhook')}",
+        "notification_url": f"{base_url}/checkout/webhook/",
         "external_reference": str(pedido.id),
         "statement_descriptor": statement_descriptor,
     }
 
-    # Em ambiente local, o Mercado Pago pode rejeitar auto_return por URL não pública
-    if not is_local_callback:
+    local_base_urls = ('http://localhost', 'http://127.0.0.1')
+    allow_auto_return = not base_url.startswith(local_base_urls)
+    if allow_auto_return:
         preference_data["auto_return"] = "approved"
+    else:
+        logger.warning('AUTO_RETURN desativado para base_url local: %s', base_url)
+
+    logger.warning(f'BACK_URLS={preference_data["back_urls"]}')
 
     if payer_data:
         preference_data["payer"] = payer_data
 
     payload_json_pretty = json.dumps(preference_data, ensure_ascii=False, indent=2, default=str)
     payload_json_single = json.dumps(preference_data, ensure_ascii=False, default=str)
+
+    # PRINT BEM VISÍVEL DO JSON COMPLETO
+    print("\n" + "="*100)
+    print("🔵 JSON SENDO ENVIADO PARA MERCADO PAGO:")
+    print("="*100)
+    print(payload_json_pretty)
+    print("="*100 + "\n")
 
     logger.warning('MP_PREFERENCE_JSON=%s', payload_json_single)
     print(f"MP_PREFERENCE_JSON={payload_json_single}")
@@ -590,3 +623,58 @@ def webhook(request):
     except Exception as e:
         logger.error(f'Erro no processamento do webhook: {str(e)}', exc_info=True)
         return HttpResponse(status=200)
+
+
+@require_POST
+@csrf_exempt
+def redirect_fallback(request):
+    """
+    Endpoint que processa o fallback de redirecionamento após Mercado Pago.
+    Se o auto_return não funcionar, este endpoint redireciona o usuário manualmente.
+    """
+    try:
+        data = json.loads(request.body)
+        preference_id = data.get('preference_id')
+        
+        if not preference_id:
+            return JsonResponse({'error': 'preference_id não fornecido'}, status=400)
+        
+        # Procura o pedido com este preference_id (transaction_id)
+        pedido = Pedido.objects.filter(transaction_id=preference_id).first()
+        
+        if not pedido:
+            logger.warning(f'Fallback: Pedido não encontrado para preference_id {preference_id}')
+            return JsonResponse({'error': 'Pedido não encontrado'}, status=404)
+        
+        # Determina a URL de redirecionamento baseado no status do pedido
+        base_url = request.build_absolute_uri('/')[:-1]
+        
+        # Fallback para base_url
+        if not base_url or base_url in ('http://', 'https://'):
+            if settings.DEBUG:
+                base_url = 'http://localhost:8000'
+            else:
+                host = settings.ALLOWED_HOSTS[0] if settings.ALLOWED_HOSTS else 'localhost'
+                protocol = 'https'
+                base_url = f'{protocol}://{host}'
+        
+        if pedido.status == 'aprovado':
+            redirect_url = f"{base_url}/checkout/sucesso/{pedido.id}/"
+            logger.info(f'Fallback: Redirecionando pedido #{pedido.id} para sucesso')
+        elif pedido.status == 'cancelado':
+            redirect_url = f"{base_url}/checkout/falha/{pedido.id}/"
+            logger.info(f'Fallback: Redirecionando pedido #{pedido.id} para falha')
+        else:
+            redirect_url = f"{base_url}/checkout/pendente/{pedido.id}/"
+            logger.info(f'Fallback: Redirecionando pedido #{pedido.id} para pendente')
+        
+        return JsonResponse({
+            'redirect_url': redirect_url,
+            'status': pedido.status,
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'JSON inválido'}, status=400)
+    except Exception as e:
+        logger.error(f'Erro no fallback de redirecionamento: {str(e)}', exc_info=True)
+        return JsonResponse({'error': 'Erro ao processar'}, status=500)
