@@ -177,6 +177,7 @@ LOGOUT_REDIRECT_URL = 'sales'
 
 # Carrinho de Compras
 CART_SESSION_ID = 'carrinho'
+CSRF_TRUSTED_ORIGINS = ['https://unaiding-denzel-unriven.ngrok-free.dev']
 
 # =============================================================================
 # MERCADO PAGO - CONFIGURAÇÃO AUTOMÁTICA POR AMBIENTE
@@ -212,6 +213,8 @@ else:
     MERCADOPAGO_TEST_ONLY = True
     MERCADOPAGO_CHECKOUT_POINT = 'sandbox_init_point'
     MERCADOPAGO_INCLUDE_PAYER = False
+    # URL base para testes com ngrok
+    MERCADOPAGO_BASE_URL = 'https://unaiding-denzel-unriven.ngrok-free.dev/'
 
 # Configurações comuns
 MERCADOPAGO_PAYER_EMAIL_OVERRIDE = ''  # Deixe vazio para usar email do usuário logado
