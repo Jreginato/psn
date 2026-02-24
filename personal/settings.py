@@ -213,8 +213,8 @@ else:
     MERCADOPAGO_TEST_ONLY = True
     MERCADOPAGO_CHECKOUT_POINT = 'sandbox_init_point'
     MERCADOPAGO_INCLUDE_PAYER = False
-    # URL base para testes com ngrok
-    MERCADOPAGO_BASE_URL = 'https://unaiding-denzel-unriven.ngrok-free.dev/'
+    # URL base dinâmica (None para autodetectar pelo request)
+    MERCADOPAGO_BASE_URL = None
 
 # Configurações comuns
 MERCADOPAGO_PAYER_EMAIL_OVERRIDE = ''  # Deixe vazio para usar email do usuário logado

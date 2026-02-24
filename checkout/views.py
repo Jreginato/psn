@@ -219,11 +219,11 @@ def processar_pedido(request):
     print(f"MP_ENV_DIAGNOSTIC={json.dumps(env_diag, ensure_ascii=False, default=str)}")
     
     # URLs de retorno
-    base_url = getattr(settings, 'MERCADOPAGO_BASE_URL', '').strip()
+    base_url = getattr(settings, 'MERCADOPAGO_BASE_URL', None)
     if base_url:
         base_url = base_url.rstrip('/')
     else:
-        base_url = request.build_absolute_uri('/')[:-1]
+        base_url = request.build_absolute_uri('/').rstrip('/')
     
     # Validação: se base_url vir vazio, usa fallback
     if not base_url or base_url in ('http://', 'https://'):
