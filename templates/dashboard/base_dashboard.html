@@ -60,7 +60,13 @@
                     <i class="fas fa-box"></i>
                     <span>Meus Produtos</span>
                 </a>
+                <a href="#" class="nav-item" id="menu-instalar-app">
+                    <i class="fas fa-download"></i>
+                    <span>Como instalar o App</span>
+                </a>
             </div>
+
+            <!-- Instruções de Instalação do App (PWA) -->
 
             <!-- Produtos do usuário (carregados dinamicamente) -->
             {% if user_produtos %}
@@ -74,6 +80,47 @@
                 {% endfor %}
             </div>
             {% endif %}
+
+            <!-- Aviso educativo para instalação do PWA no iOS -->
+            <div id="ios-pwa-install" style="display:none; margin-bottom: 20px;">
+                <div class="alert alert-info" style="display: flex; align-items: center; gap: 10px;">
+                    <img src="https://img.icons8.com/ios-filled/50/000000/iphone.png" alt="iOS" style="height:32px;">
+                    <div>
+                        <strong>Instale o EvolutyApp no seu iPhone!</strong><br>
+                        Para instalar o app na tela inicial do iOS, é necessário usar o navegador Safari.<br>
+                        <span id="ios-pwa-safari-instructions" style="display:none;">
+                            <br>Para instalar:
+                            <ol style="margin: 0 0 0 18px; padding: 0;">
+                                <li>Toque no ícone <img src="https://img.icons8.com/ios-glyphs/30/000000/share--v1.png" alt="Compartilhar" style="height:18px;vertical-align:middle;"> na barra inferior do Safari.</li>
+                                <li>Selecione <b>Adicionar à Tela de Início</b>.</li>
+                                <li>Confirme em "Adicionar".</li>
+                            </ol>
+                        </span>
+                        <span id="ios-pwa-nonsafari-instructions" style="display:none;">
+                            <br><b>Atenção:</b> O navegador atual não permite instalar o app.<br>
+                            Abra este site no Safari para adicionar à tela inicial.
+                        </span>
+                    </div>
+                    <button onclick="document.getElementById('ios-pwa-install').style.display='none'" class="alert-close" style="margin-left:auto;">&times;</button>
+                </div>
+            </div>
+
+            <!-- Aviso educativo para instalação do PWA no Android -->
+            <div id="android-pwa-install" style="display:none; margin-bottom: 20px;">
+                <div class="alert alert-success" style="display: flex; align-items: center; gap: 10px;">
+                    <img src="https://img.icons8.com/color/48/000000/android-os.png" alt="Android" style="height:32px;">
+                    <div>
+                        <strong>Instale o EvolutyApp no seu Android!</strong><br>
+                        Para uma experiência melhor, adicione o app à tela inicial:<br>
+                        <ol style="margin: 0 0 0 18px; padding: 0;">
+                            <li>Toque no ícone <b>⋮</b> no canto superior direito do Chrome.</li>
+                            <li>Selecione <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.</li>
+                            <li>Confirme em "Instalar" ou "Adicionar".</li>
+                        </ol>
+                    </div>
+                    <button onclick="document.getElementById('android-pwa-install').style.display='none'" class="alert-close" style="margin-left:auto;">&times;</button>
+                </div>
+            </div>
 
             <!-- Consultoria Online (apenas para usuários com consultoria ativa) -->
             {% if user.tem_consultoria_online %}
@@ -183,6 +230,36 @@
             {% endif %}
 
             {% block content %}{% endblock %}
+                    <div id="install-app-content" style="display:none; max-width:600px; margin:0 auto;">
+                        <h2 style="margin-top:0; font-size:1.5em;">Como instalar o EvolutyApp</h2>
+                        <div class="pwa-instructions" style="font-size: 1.05em; color: #222;">
+                            <b>Android (Chrome, Firefox, Edge, Opera...):</b>
+                            <ol style="margin: 0 0 8px 18px; padding: 0;">
+                                <li>Abra no navegador de sua preferência.</li>
+                                <li>Toque no menu (<b>⋮</b> ou <b>≡</b> ou <b>•••</b>), geralmente no canto superior direito.</li>
+                                <li>Procure por <b>Instalar app</b> ou <b>Adicionar à tela inicial</b> e siga as instruções.</li>
+                            </ol>
+                            <b>iPhone/iPad <br>(Safari):</b>
+                            <ol style="margin: 0 0 8px 18px; padding: 0;">
+                                <li>Abra no Safari.</li>
+                                <li>Toque no ícone <b>•••</b> ou <img src="https://img.icons8.com/ios-glyphs/18/000000/share--v1.png" alt="Compartilhar" style="height:16px;vertical-align:middle;"> na barra inferior.</li>
+                                <li>Clique em compartilhar </li>
+                                <li>Toque no ícone <b>•••</b></li> 
+                                <li>Selecione <b>+ Adicionar à Tela de Início</b>.</li>
+                            </ol>
+
+                                <ol style="margin: 0 0 8px 18px; padding: 0;">
+                                <b>Chrome</b>
+                                <li>Toque no ícone de compartilhar ao lado do link do site</li>
+                                <li>Toque no ícone <b>•••</b></li> 
+                                <li>Selecione <b>+ Adicionar à Tela de Início</b>.</li>
+
+                               
+                            </ol>
+                            <span style="font-size:0.93em;color:#888;">Caso tenha dificuldades entre em contato no nosso Whatsapp que iremos te ajudar.</span>
+                        </div>
+                        <button onclick="document.getElementById('install-app-content').style.display='none'" class="alert-close" style="margin-top:16px;">Fechar</button>
+                    </div>
         </main>
 
         <!-- Footer -->
@@ -205,5 +282,84 @@
     <script src="{% static 'js/dashboard.js' %}"></script>
     <script src="{% static 'js/pwa.js' %}"></script>
     {% block extra_js %}{% endblock %}
+<script>
+// Exibe instruções de instalação do app na área de conteúdo ao clicar no menu
+document.addEventListener('DOMContentLoaded', function() {
+    var menu = document.getElementById('menu-instalar-app');
+    var content = document.getElementById('install-app-content');
+    if (menu && content) {
+        menu.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Esconde outros conteúdos (simples: esconde todos os filhos diretos do main exceto o bloco de instrução)
+            var main = document.querySelector('main.content');
+            if (main) {
+                Array.from(main.children).forEach(function(child) {
+                    if (child !== content) child.style.display = 'none';
+                });
+            }
+            content.style.display = 'block';
+        });
+        // Botão fechar volta ao dashboard
+        content.querySelector('.alert-close').addEventListener('click', function() {
+            content.style.display = 'none';
+            // Mostra de volta os outros conteúdos
+            var main = document.querySelector('main.content');
+            if (main) {
+                Array.from(main.children).forEach(function(child) {
+                    if (child !== content) child.style.display = '';
+                });
+            }
+        });
+    }
+});
+</script>
+<script>
+// Detecta iOS e Android/Chrome e exibe avisos de instalação PWA
+let deferredPrompt = null;
+function isIos() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+function isInStandaloneMode() {
+    return (window.navigator.standalone === true) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+}
+function isSafari() {
+    // Safari no iOS: tem "Safari" no userAgent e não tem "CriOS" (Chrome) nem "FxiOS" (Firefox)
+    return /safari/i.test(navigator.userAgent) && !/crios|fxios|edgios|opios/i.test(navigator.userAgent);
+}
+function isAndroidChrome() {
+    return /android/i.test(navigator.userAgent) && /chrome/i.test(navigator.userAgent);
+}
+
+window.addEventListener('beforeinstallprompt', function(e) {
+    // Intercepta o evento e salva para uso posterior
+    e.preventDefault();
+    deferredPrompt = e;
+    // Mostra banner customizado
+    var aviso = document.getElementById('android-pwa-install');
+    if (aviso) aviso.style.display = 'block';
+});
+
+window.addEventListener('DOMContentLoaded', function() {
+    // iOS: mostra aviso para todos os navegadores
+    if (isIos() && !isInStandaloneMode()) {
+        var aviso = document.getElementById('ios-pwa-install');
+        if (aviso) {
+            aviso.style.display = 'block';
+            if (isSafari()) {
+                document.getElementById('ios-pwa-safari-instructions').style.display = 'inline';
+            } else {
+                document.getElementById('ios-pwa-nonsafari-instructions').style.display = 'inline';
+            }
+        }
+    }
+    // Android Chrome: sempre mostra aviso se não estiver instalado
+    if (isAndroidChrome() && !isInStandaloneMode()) {
+        setTimeout(function() {
+            var aviso = document.getElementById('android-pwa-install');
+            if (aviso) aviso.style.display = 'block';
+        }, 2000);
+    }
+});
+</script>
 </body>
 </html>
