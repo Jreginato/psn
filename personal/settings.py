@@ -200,7 +200,7 @@ if IS_PRODUCTION:
     # ===== PRODUÇÃO =====
     MERCADOPAGO_ACCESS_TOKEN = os.environ.get('MP_ACCESS_TOKEN_PROD', '')
     MERCADOPAGO_PUBLIC_KEY = os.environ.get('MP_PUBLIC_KEY_PROD', '')
-    print(f"[MP] PROD: ACCESS_TOKEN={MERCADOPAGO_ACCESS_TOKEN[:12]}... PUBLIC_KEY={MERCADOPAGO_PUBLIC_KEY[:12]}...")
+    # print removido por segurança
     MERCADOPAGO_MODE = 'prod'
     MERCADOPAGO_TEST_ONLY = False
     MERCADOPAGO_CHECKOUT_POINT = 'init_point'
@@ -209,7 +209,7 @@ else:
     # ===== DESENVOLVIMENTO =====
     MERCADOPAGO_ACCESS_TOKEN = os.environ.get('MP_ACCESS_TOKEN_TEST', '')
     MERCADOPAGO_PUBLIC_KEY = os.environ.get('MP_PUBLIC_KEY_TEST', '')
-    print(f"[MP] DEV: ACCESS_TOKEN={MERCADOPAGO_ACCESS_TOKEN[:12]}... PUBLIC_KEY={MERCADOPAGO_PUBLIC_KEY[:12]}...")
+    # print removido por segurança
     MERCADOPAGO_MODE = 'test'
     MERCADOPAGO_TEST_ONLY = True
     MERCADOPAGO_CHECKOUT_POINT = 'sandbox_init_point'

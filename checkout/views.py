@@ -224,7 +224,7 @@ def processar_pedido(request):
         'debug': bool(settings.DEBUG),
     }
     logger.warning('MP_ENV_DIAGNOSTIC=%s', json.dumps(env_diag, ensure_ascii=False, default=str))
-    print(f"MP_ENV_DIAGNOSTIC={json.dumps(env_diag, ensure_ascii=False, default=str)}")
+    # print removido por segurança
     
     # URLs de retorno
     base_url = getattr(settings, 'MERCADOPAGO_BASE_URL', None)
@@ -248,9 +248,9 @@ def processar_pedido(request):
         base_url = 'http://localhost:8000'
     
     logger.warning(f'BASE_URL construído: {base_url}')
-    print(f"\nBASE_URL FINAL: {base_url}")
-    print(f"DEBUG: {settings.DEBUG}")
-    print(f"REQUEST BUILD ABSOLUTE URI: {request.build_absolute_uri('/')}\n")
+    # print removido por segurança
+    # print removido por segurança
+    # print removido por segurança
 
     # Em produção (não test_only), incluir payer para modo convidado
     include_payer = getattr(settings, 'MERCADOPAGO_INCLUDE_PAYER', False)
@@ -311,14 +311,10 @@ def processar_pedido(request):
     payload_json_single = json.dumps(preference_data, ensure_ascii=False, default=str)
 
     # PRINT BEM VISÍVEL DO JSON COMPLETO
-    print("\n" + "="*100)
-    print("🔵 JSON SENDO ENVIADO PARA MERCADO PAGO:")
-    print("="*100)
-    print(payload_json_pretty)
-    print("="*100 + "\n")
+    # prints removidos por segurança
 
     logger.warning('MP_PREFERENCE_JSON=%s', payload_json_single)
-    print(f"MP_PREFERENCE_JSON={payload_json_single}")
+    # print removido por segurança
 
     logger.info(
         'Payload enviado para criar preferência MP (pedido #%s):\n%s',
@@ -330,7 +326,7 @@ def processar_pedido(request):
         preference_response = sdk.preference().create(preference_data)
         response_json_single = json.dumps(preference_response, ensure_ascii=False, default=str)
         logger.warning('MP_PREFERENCE_RESPONSE_JSON=%s', response_json_single)
-        print(f"MP_PREFERENCE_RESPONSE_JSON={response_json_single}")
+        # print removido por segurança
         logger.info(
             'Resposta da criação de preferência MP (pedido #%s):\n%s',
             pedido.id,

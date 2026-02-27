@@ -20,44 +20,12 @@ BG_COLOR = '#10b981'  # Verde primário
 TEXT_COLOR = '#ffffff'  # Branco
 
 def create_icon(size):
-    """Cria um ícone quadrado com o logo/iniciais"""
-    # Criar imagem
-    img = Image.new('RGB', (size, size), BG_COLOR)
-    draw = ImageDraw.Draw(img)
-    
-    # Texto a ser desenhado (iniciais)
-    text = "PT"
-    
-    # Tentar usar fonte do sistema, se não houver, usar fonte padrão
-    try:
-        # Tamanho da fonte proporcional ao ícone
-        font_size = int(size * 0.4)
-        font = ImageFont.truetype("arial.ttf", font_size)
-    except:
-        # Fonte padrão se não encontrar Arial
-        font = ImageFont.load_default()
-    
-    # Obter tamanho do texto
-    bbox = draw.textbbox((0, 0), text, font=font)
-    text_width = bbox[2] - bbox[0]
-    text_height = bbox[3] - bbox[1]
-    
-    # Centralizar texto
-    x = (size - text_width) // 2
-    y = (size - text_height) // 2 - bbox[1]
-    
-    # Desenhar círculo de fundo (opcional)
-    margin = size // 10
-    draw.ellipse(
-        [margin, margin, size - margin, size - margin],
-        fill='#059669',  # Verde mais escuro
-        outline=TEXT_COLOR,
-        width=max(2, size // 100)
-    )
-    
-    # Desenhar texto
-    draw.text((x, y), text, fill=TEXT_COLOR, font=font)
-    
+    """Redimensiona a imagem base 7.png para o tamanho desejado"""
+    base_path = os.path.join(OUTPUT_DIR, '7.png')
+    if not os.path.exists(base_path):
+        raise FileNotFoundError(f"Imagem base '7.png' não encontrada em {OUTPUT_DIR}")
+    img = Image.open(base_path).convert('RGBA')
+    img = img.resize((size, size), Image.LANCZOS)
     return img
 
 def main():
