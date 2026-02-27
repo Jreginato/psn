@@ -17,7 +17,7 @@ import hmac
 import hashlib
 import logging
 
-from produtos.models import Produto, Pedido, ItemPedido
+from produtos.models import Produto, Pedido, ItemPedido, AcessoProduto
 from carrinho.carrinho import Carrinho
 
 # Configurar loggers
@@ -139,22 +139,33 @@ def processar_pedido(request):
     desconto = Decimal('0.00')
     total = subtotal - desconto
     
-    # Cria o pedido
-    pedido = Pedido.objects.create(
-        usuario=request.user,
-        subtotal=subtotal,
-        desconto=desconto,
-        total=total,
-        status='pendente',
-        email_compra=request.user.email,
-        nome_compra=request.user.get_full_name() or request.user.email,
-        metodo_pagamento='Mercado Pago'
-    )
-    
-    # Cria os itens do pedido
+    # Busca pedido pendente/processando do usuário
+    pedido = Pedido.objects.filter(usuario=request.user, status__in=['pendente', 'processando']).order_by('-criado_em').first()
+    if pedido:
+        # Limpa itens antigos
+        pedido.itens.all().delete()
+        pedido.subtotal = subtotal
+        pedido.desconto = desconto
+        pedido.total = total
+        pedido.email_compra = request.user.email
+        pedido.nome_compra = request.user.get_full_name() or request.user.email
+        pedido.metodo_pagamento = 'Mercado Pago'
+        pedido.save()
+    else:
+        pedido = Pedido.objects.create(
+            usuario=request.user,
+            subtotal=subtotal,
+            desconto=desconto,
+            total=total,
+            status='pendente',
+            email_compra=request.user.email,
+            nome_compra=request.user.get_full_name() or request.user.email,
+            metodo_pagamento='Mercado Pago'
+        )
+
+    # Cria os itens do pedido (sempre reflete o carrinho atual)
     items_mp = []
     total_verificacao = Decimal('0.00')
-    
     for item in carrinho:
         ItemPedido.objects.create(
             pedido=pedido,
@@ -164,15 +175,12 @@ def processar_pedido(request):
             quantidade=item['quantidade'],
             subtotal=item['total_preco']
         )
-        
-        # Adiciona item para o Mercado Pago
         items_mp.append({
             "title": item['produto'].nome[:120],
             "quantity": item['quantidade'],
             "unit_price": float(item['preco']),
             "currency_id": "BRL",
         })
-        
         total_verificacao += item['total_preco']
     
     # VALIDAÇÃO: Garantir que o total bate
@@ -269,13 +277,19 @@ def processar_pedido(request):
         getattr(settings, 'MERCADOPAGO_STATEMENT_DESCRIPTOR', 'PERSONAL TRAINER')
     )
 
+    back_urls = {
+        "success": f"{base_url}/checkout/sucesso/{pedido.id}/",
+        "failure": f"{base_url}/checkout/falha/{pedido.id}/",
+        "pending": f"{base_url}/checkout/pendente/{pedido.id}/",
+    }
+    # Garantir que success está preenchido corretamente
+    if not back_urls["success"] or back_urls["success"].endswith('//'):
+        logger.error(f"BACK_URLS['success'] inválido: {back_urls['success']}")
+        raise ValueError("URL de sucesso do Mercado Pago não pode ser vazia ou inválida!")
+
     preference_data = {
         "items": items_mp,
-        "back_urls": {
-            "success": f"{base_url}/checkout/sucesso/{pedido.id}/",
-            "failure": f"{base_url}/checkout/falha/{pedido.id}/",
-            "pending": f"{base_url}/checkout/pendente/{pedido.id}/",
-        },
+        "back_urls": back_urls,
         "notification_url": f"{base_url}/checkout/webhook/",
         "external_reference": str(pedido.id),
         "statement_descriptor": statement_descriptor,
@@ -446,18 +460,19 @@ def pagamento_pendente(request, pedido_id):
     pedido = get_object_or_404(Pedido, id=pedido_id, usuario=request.user)
 
     _sincronizar_status_retorno_mp(request, pedido)
-    
-    if pedido.status == 'pendente':
-        pedido.status = 'processando'
-        pedido.save()
-    
-    logger.info(f'Pedido #{pedido.id} ficou pendente no MP')
-    messages.info(request, 'Pagamento pendente. Você será notificado quando for aprovado.')
-    
+
+    if pedido.status == 'aprovado':
+        messages.success(request, 'Pagamento aprovado com sucesso! Seu acesso já foi liberado.')
+    elif pedido.status == 'cancelado':
+        messages.error(request, 'Pagamento não aprovado. Tente novamente com outra forma de pagamento.')
+    else:
+        logger.info(f'Pedido #{pedido.id} ficou pendente no MP')
+        messages.info(request, 'Pagamento pendente. Você será notificado quando for aprovado.')
+
     context = {
         'pedido': pedido,
     }
-    
+
     return render(request, 'checkout/pagamento_sucesso.html', context)
 
 
@@ -472,6 +487,12 @@ def webhook(request):
     """
     try:
         logger.info('🔓 WEBHOOK EM MODO DE DESENVOLVIMENTO - Validações de segurança desabilitadas')
+        
+        # ========== VALIDAÇÃO DE ASSINATURA HMAC SHA-256 DO MERCADO PAGO ==========
+        if not validar_webhook_mercadopago(request):
+            security_logger.warning('Webhook com assinatura inválida ou ausente!')
+            return HttpResponseForbidden('Assinatura inválida')
+        # ========== FIM DA VALIDAÇÃO DE ASSINATURA ==========
         
         # ========== VALIDAÇÕES DE SEGURANÇA (DESABILITADAS PARA TESTE) ==========
         
@@ -582,7 +603,7 @@ def webhook(request):
             
             # # 7. VALIDAÇÃO: Verificar se o pedido não foi aprovado anteriormente (DESABILITADA)
             # if pedido.status == 'aprovado' and pedido.aprovado_em:
-            #     logger.info(f'Pedido #{pedido_id} já aprovado anteriormente')
+            #     logger.info(f'Pedido #{pedido.id} já aprovado anteriormente')
             #     return HttpResponse(status=200)
             
             # 8. ATUALIZA STATUS BASEADO NO PAGAMENTO
@@ -598,21 +619,21 @@ def webhook(request):
                 # Libera acesso aos produtos
                 pedido.liberar_acesso_produtos()
                 
-                logger.info(f'✅ Pedido #{pedido_id} APROVADO - Pagamento {payment_id} - R$ {valor_pago}')
-                security_logger.info(f'Acesso liberado para pedido #{pedido_id} - Usuário: {pedido.usuario.email}')
+                logger.info(f'✅ Pedido #{pedido.id} APROVADO - Pagamento {payment_id} - R$ {valor_pago}')
+                security_logger.info(f'Acesso liberado para pedido #{pedido.id} - Usuário: {pedido.usuario.email}')
                 
             elif status == 'in_process' or status == 'pending':
                 pedido.status = 'processando'
                 pedido.save()
-                logger.info(f'⏳ Pedido #{pedido_id} EM PROCESSAMENTO')
+                logger.info(f'⏳ Pedido #{pedido.id} EM PROCESSAMENTO')
                 
             elif status == 'rejected' or status == 'cancelled':
                 pedido.status = 'cancelado'
                 pedido.save()
-                logger.info(f'❌ Pedido #{pedido_id} CANCELADO/REJEITADO')
+                logger.info(f'❌ Pedido #{pedido.id} CANCELADO/REJEITADO')
             
             else:
-                logger.warning(f'Status desconhecido: {status} para pedido #{pedido_id}')
+                logger.warning(f'Status desconhecido: {status} para pedido #{pedido.id}')
         
         return HttpResponse(status=200)
         
@@ -678,3 +699,23 @@ def redirect_fallback(request):
     except Exception as e:
         logger.error(f'Erro no fallback de redirecionamento: {str(e)}', exc_info=True)
         return JsonResponse({'error': 'Erro ao processar'}, status=500)
+
+def validar_webhook_mercadopago(request):
+    """
+    Valida a assinatura do webhook do Mercado Pago.
+    Retorna True se válido, False se inválido.
+    """
+    from django.conf import settings
+    secret = getattr(settings, 'MERCADOPAGO_WEBHOOK_SECRET', None)
+    if not secret:
+        return False
+    signature = request.headers.get('X-Webhook-Signature')
+    if not signature:
+        return False
+    body = request.body
+    expected_signature = hmac.new(
+        key=secret.encode(),
+        msg=body,
+        digestmod=hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(signature, expected_signature)

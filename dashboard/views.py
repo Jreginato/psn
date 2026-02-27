@@ -17,12 +17,11 @@ def home(request):
     ).select_related('produto', 'produto__categoria')
     acessos = acessos_qs.order_by('-liberado_em')
     
-    # Últimos pedidos
+    # Últimos pedidos (para exibir na tabela)
     pedidos = Pedido.objects.filter(usuario=request.user).order_by('-criado_em')[:5]
-    
-    # Estatísticas
+    # Contador de todos os pedidos do usuário
     total_produtos = acessos_qs.count()
-    total_pedidos = pedidos.count()
+    total_pedidos = Pedido.objects.filter(usuario=request.user).count()
     
     context = {
         'acessos': acessos,

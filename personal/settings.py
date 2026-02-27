@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import socket
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -215,6 +216,27 @@ else:
     MERCADOPAGO_INCLUDE_PAYER = False
     # URL base dinâmica (None para autodetectar pelo request)
     MERCADOPAGO_BASE_URL = None
+
+# Função para detectar dinamicamente a base_url
+def get_dynamic_base_url():
+    env_url = os.environ.get('MERCADOPAGO_BASE_URL', '').strip()
+    if env_url:
+        return env_url.rstrip('/')
+    # Detecta se está rodando no PythonAnywhere
+    if 'pythonanywhere.com' in socket.gethostname() or 'pythonanywhere.com' in os.environ.get('ALLOWED_HOST', ''):
+        return 'https://jreginato.pythonanywhere.com'
+    # Detecta se está rodando no ngrok (exemplo: variável de ambiente NGROK_URL)
+    ngrok_url = os.environ.get('NGROK_URL', '').strip()
+    if ngrok_url:
+        return ngrok_url.rstrip('/')
+    # Detecta se está rodando local
+    if os.environ.get('DJANGO_ENV', '') == 'development' or DEBUG:
+        return 'http://localhost:8000'
+    # Fallback
+    return ''
+
+# No bloco de configuração Mercado Pago, logo após definir as outras variáveis:
+MERCADOPAGO_BASE_URL = get_dynamic_base_url()
 
 # Configurações comuns
 MERCADOPAGO_PAYER_EMAIL_OVERRIDE = ''  # Deixe vazio para usar email do usuário logado
