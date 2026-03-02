@@ -12,4 +12,7 @@ urlpatterns = [
     path('add/<int:produto_id>/', views.carrinho_add, name='carrinho_add'),
     path('remove/<int:produto_id>/', views.carrinho_remove, name='carrinho_remove'),
     path('clear/', views.carrinho_clear, name='carrinho_clear'),
+    # Cupom
+    path('cupom/aplicar/', views.aplicar_cupom, name='aplicar_cupom'),
+    path('cupom/remover/', views.remover_cupom, name='remover_cupom'),
 ]

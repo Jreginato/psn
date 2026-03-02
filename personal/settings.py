@@ -143,9 +143,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'pt-BR'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Sao_Paulo'
 
 USE_I18N = True
 
@@ -224,7 +224,7 @@ def get_dynamic_base_url():
         return env_url.rstrip('/')
     # Detecta se está rodando no PythonAnywhere
     if 'pythonanywhere.com' in socket.gethostname() or 'pythonanywhere.com' in os.environ.get('ALLOWED_HOST', ''):
-        return 'https://jreginato.pythonanywhere.com'
+        return 'https://jreginato93.pythonanywhere.com'
     # Detecta se está rodando no ngrok (exemplo: variável de ambiente NGROK_URL)
     ngrok_url = os.environ.get('NGROK_URL', '').strip()
     if ngrok_url:
@@ -240,7 +240,41 @@ MERCADOPAGO_BASE_URL = get_dynamic_base_url()
 
 # Configurações comuns
 MERCADOPAGO_PAYER_EMAIL_OVERRIDE = ''  # Deixe vazio para usar email do usuário logado
-MERCADOPAGO_STATEMENT_DESCRIPTOR = 'PERSONAL TRAINER'  # Aparece na fatura do cartão (max 13 chars alfanum)
+MERCADOPAGO_STATEMENT_DESCRIPTOR = 'EVOLUTYAPP'  # Aparece na fatura do cartão (max 13 chars alfanum)
+
+# =============================================================================
+# EMAIL
+# =============================================================================
+# Em DESENVOLVIMENTO: emails aparecem no console (sem servidor SMTP necessário)
+# Em PRODUÇÃO: configure as variáveis de ambiente abaixo no .env ou painel
+#   EMAIL_HOST=smtp.gmail.com
+#   EMAIL_PORT=587
+#   EMAIL_HOST_USER=seuemail@gmail.com
+#   EMAIL_HOST_PASSWORD=sua_senha_de_app
+#   DEFAULT_FROM_EMAIL=EvolutyApp <seuemail@gmail.com>
+# =============================================================================
+
+if IS_PRODUCTION:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+    DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'EvolutyApp <noreply@evolutyapp.com>')
+else:
+    # Desenvolvimento: usa SMTP se EMAIL_HOST_USER estiver definido no .env, senão imprime no terminal
+    if os.environ.get('EMAIL_HOST_USER', ''):
+        EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+        EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+        EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+        EMAIL_USE_TLS = True
+        EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+        EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+        DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'EvolutyApp <noreply@evolutyapp.com>')
+    else:
+        EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+        DEFAULT_FROM_EMAIL = 'EvolutyApp <noreply@evolutyapp.com>'
 
 # =============================================================================
 # CONFIGURAÇÕES DE SEGURANÇA - AUTOMÁTICAS POR AMBIENTE

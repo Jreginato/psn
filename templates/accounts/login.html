@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Personal Trainer</title>
+    <title>Login | EvolutyApp</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -120,6 +120,7 @@
 
             <form method="post">
                 {% csrf_token %}
+                {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
                 <div class="form-group">
                     <label for="id_username">E-mail</label>
                     <input type="email" name="username" id="id_username" class="form-input" placeholder="seu@email.com" required autofocus>
@@ -131,8 +132,12 @@
                 <button type="submit" class="btn-login">Entrar</button>
             </form>
 
+            <div style="text-align:right;margin-top:10px;">
+                <a href="{% url 'accounts:password_reset' %}" style="color:var(--muted);font-size:13px;text-decoration:none;">Esqueci minha senha</a>
+            </div>
+
             <div class="login-footer">
-                <p>Não tem uma conta? <a href="{% url 'accounts:cadastro' %}">Criar Conta</a></p>
+                <p>Não tem uma conta? <a href="{% url 'accounts:cadastro' %}{% if next %}?next={{ next }}{% endif %}">Criar Conta</a></p>
                 <p style="margin-top: 12px;"><a href="{% url 'sales' %}">← Voltar para o site</a></p>
             </div>
         </div>

@@ -4,8 +4,10 @@ Views do Carrinho de Compras
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 from django.contrib import messages
+from django.utils import timezone
 from produtos.models import Produto
 from .carrinho import Carrinho
+from .models import Cupom
 
 
 def carrinho_detalhes(request):
@@ -58,3 +60,62 @@ def carrinho_clear(request):
     messages.info(request, 'O carrinho foi esvaziado.')
     
     return redirect('carrinho:carrinho_detalhes')
+
+
+@require_POST
+def aplicar_cupom(request):
+    """
+    Aplica um cupom de desconto ao carrinho (validação 100% no backend).
+    """
+    carrinho = Carrinho(request)
+    codigo = request.POST.get('codigo', '').strip().upper()
+
+    if not codigo:
+        messages.error(request, 'Informe o código do cupom.')
+        return redirect('carrinho:carrinho_detalhes')
+
+    try:
+        cupom = Cupom.objects.get(codigo=codigo)
+    except Cupom.DoesNotExist:
+        messages.error(request, 'Cupom inválido ou inexistente.')
+        return redirect('carrinho:carrinho_detalhes')
+
+    if not cupom.esta_valido:
+        if cupom.validade and cupom.validade < timezone.now().date():
+            messages.error(request, 'Este cupom está expirado.')
+        elif cupom.uso_maximo and cupom.total_usado >= cupom.uso_maximo:
+            messages.error(request, 'Este cupom já atingiu o limite de usos.')
+        elif not cupom.ativo:
+            messages.error(request, 'Este cupom não está ativo.')
+        else:
+            messages.error(request, 'Cupom inválido.')
+        return redirect('carrinho:carrinho_detalhes')
+
+    subtotal = carrinho.get_total_preco()
+    if subtotal < cupom.valor_minimo_pedido:
+        from django.templatetags.l10n import localize
+        messages.error(
+            request,
+            f'Pedido mínimo para este cupom é R$ {cupom.valor_minimo_pedido:.2f}.'
+        )
+        return redirect('carrinho:carrinho_detalhes')
+
+    carrinho.set_cupom(cupom)
+    desconto = cupom.calcular_desconto(subtotal)
+    messages.success(
+        request,
+        f'Cupom "{cupom.codigo}" aplicado! Desconto de R$ {desconto:.2f}.'
+    )
+    return redirect('carrinho:carrinho_detalhes')
+
+
+@require_POST
+def remover_cupom(request):
+    """
+    Remove o cupom aplicado ao carrinho.
+    """
+    carrinho = Carrinho(request)
+    carrinho.clear_cupom()
+    messages.info(request, 'Cupom removido.')
+    return redirect('carrinho:carrinho_detalhes')
+

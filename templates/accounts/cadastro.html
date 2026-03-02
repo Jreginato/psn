@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro | Personal Trainer</title>
+    <title>Cadastro | EvolutyApp</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -128,6 +128,7 @@
 
             <form method="post" id="cadastro-form">
                 {% csrf_token %}
+                {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
                 
                 <div class="form-group">
                     <label for="id_nome_completo">Nome Completo</label>
@@ -193,13 +194,31 @@
             </form>
 
             <div class="cadastro-footer">
-                <p>Já tem uma conta? <a href="{% url 'accounts:login' %}">Fazer Login</a></p>
+                <p>Já tem uma conta? <a href="{% url 'accounts:login' %}{% if next %}?next={{ next }}{% endif %}">Fazer Login</a></p>
                 <p style="margin-top: 12px;"><a href="{% url 'sales' %}">← Voltar para o site</a></p>
             </div>
         </div>
     </div>
 
     <script>
+        // Máscara de telefone (xx) xxxxx-xxxx ou (xx) xxxx-xxxx
+        var campoTel = document.getElementById('id_celular');
+        if (campoTel) {
+            campoTel.addEventListener('input', function(e) {
+                var v = e.target.value.replace(/\D/g, '').substring(0, 11);
+                if (v.length <= 10) {
+                    v = v.replace(/(\d{2})(\d{4})(\d{0,4})/, function(_, ddd, parte1, parte2) {
+                        return '(' + ddd + ') ' + parte1 + (parte2 ? '-' + parte2 : '');
+                    });
+                } else {
+                    v = v.replace(/(\d{2})(\d{5})(\d{0,4})/, function(_, ddd, parte1, parte2) {
+                        return '(' + ddd + ') ' + parte1 + (parte2 ? '-' + parte2 : '');
+                    });
+                }
+                e.target.value = v;
+            });
+        }
+
         // Validação de senha com 6 dígitos
         document.getElementById('cadastro-form').addEventListener('submit', function(e) {
             const senha = document.getElementById('id_senha').value;

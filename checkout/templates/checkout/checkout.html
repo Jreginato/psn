@@ -10,7 +10,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Personal Trainer" />
+    <meta name="apple-mobile-web-app-title" content="EvolutyApp" />
     
     <!-- Manifest -->
     <link rel="manifest" href="{% static 'manifest.json' %}" />
@@ -23,7 +23,7 @@
     <link rel="apple-touch-icon" sizes="152x152" href="{% static 'icons/icon-152x152.png' %}" />
     <link rel="apple-touch-icon" sizes="192x192" href="{% static 'icons/icon-192x192.png' %}" />
     
-    <title>Finalizar Compra | Personal Trainer</title>
+    <title>Finalizar Compra | EvolutyApp</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -170,7 +170,7 @@
 <body>
     <header class="topbar" id="topbar">
         <div class="container nav-wrap">
-            <a href="{% url 'sales' %}" class="brand">Personal<span>Trainer</span></a>
+            <a href="{% url 'sales' %}" class="brand">Evoluty<span>App</span></a>
             <nav class="nav">
                 <a href="{% url 'produtos:catalogo' %}">Catálogo</a>
                 <a href="{% url 'sales' %}#beneficios">Benefícios</a>
@@ -254,14 +254,23 @@
                     
                     <div class="summary-row">
                         <span class="summary-label">Subtotal ({{ carrinho|length }} {% if carrinho|length == 1 %}item{% else %}itens{% endif %})</span>
-                        <span class="summary-value">R$ {{ total }}</span>
+                        <span class="summary-value">R$ {{ subtotal }}</span>
                     </div>
-                    
+
+                    {% if cupom %}
+                    <div class="summary-row" style="border-bottom-color: rgba(16,185,129,0.3);">
+                        <span class="summary-label" style="color:#10b981;">
+                            <i class="fas fa-tag"></i> Cupom {{ cupom.codigo }}
+                        </span>
+                        <span class="summary-value" style="color:#10b981;">- R$ {{ desconto }}</span>
+                    </div>
+                    {% else %}
                     <div class="summary-row">
                         <span class="summary-label">Desconto</span>
                         <span class="summary-value">R$ 0,00</span>
                     </div>
-                    
+                    {% endif %}
+
                     <div class="summary-row total">
                         <span class="summary-label">Total</span>
                         <span class="summary-value">R$ {{ total }}</span>
@@ -300,7 +309,7 @@
 
     <footer class="footer">
         <div class="container footer-wrap">
-            <p>© 2026 Personal Trainer. Todos os direitos reservados.</p>
+            <p>© 2026 EvolutyApp. Todos os direitos reservados.</p>
             <a href="{% url 'sales' %}">Voltar ao início</a>
         </div>
     </footer>

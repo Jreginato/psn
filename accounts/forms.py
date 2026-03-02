@@ -27,11 +27,13 @@ class CadastroForm(forms.Form):
         max_length=20,
         widget=forms.TextInput(attrs={
             'class': 'form-input',
-            'placeholder': '+55 (00) 00000-0000 ou formato internacional',
-            'id': 'id_celular'
+            'placeholder': '(11) 99999-9999',
+            'id': 'id_celular',
+            'inputmode': 'numeric',
+            'autocomplete': 'tel'
         }),
         label='Celular / WhatsApp',
-        help_text='Formato brasileiro ou internacional'
+        help_text='Somente números brasileiros'
     )
     
     senha = forms.CharField(
@@ -54,6 +56,14 @@ class CadastroForm(forms.Form):
         label='Confirme a Senha'
     )
     
+    def clean_celular(self):
+        # Remove tudo que não for dígito antes de salvar
+        celular = self.cleaned_data.get('celular', '')
+        digits = ''.join(filter(str.isdigit, celular))
+        if len(digits) < 10 or len(digits) > 11:
+            raise ValidationError('Informe um número de celular válido com DDD.')
+        return digits
+
     def clean_email(self):
         email = self.cleaned_data.get('email')
         

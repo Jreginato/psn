@@ -2,6 +2,8 @@ from decimal import Decimal
 from django.conf import settings
 from produtos.models import Produto
 
+COUPON_SESSION_KEY = 'cupom_id'
+
 
 class Carrinho:
     """
@@ -20,7 +22,47 @@ class Carrinho:
             carrinho = self.session[settings.CART_SESSION_ID] = {}
         
         self.carrinho = carrinho
-    
+
+    # ─── Métodos de Cupom ────────────────────────────────────────────────────
+
+    @property
+    def cupom(self):
+        """Retorna o objeto Cupom armazenado na sessão, ou None."""
+        from carrinho.models import Cupom
+        cupom_id = self.session.get(COUPON_SESSION_KEY)
+        if cupom_id:
+            try:
+                return Cupom.objects.get(id=cupom_id)
+            except Cupom.DoesNotExist:
+                self.clear_cupom()
+        return None
+
+    def set_cupom(self, cupom):
+        """Armazena o ID do cupom na sessão."""
+        self.session[COUPON_SESSION_KEY] = cupom.id
+        self.save()
+
+    def clear_cupom(self):
+        """Remove o cupom da sessão."""
+        if COUPON_SESSION_KEY in self.session:
+            del self.session[COUPON_SESSION_KEY]
+            self.save()
+
+    def get_desconto(self):
+        """Retorna o valor do desconto baseado no cupom aplicado."""
+        cupom = self.cupom
+        if cupom and cupom.esta_valido:
+            subtotal = self.get_total_preco()
+            if subtotal >= cupom.valor_minimo_pedido:
+                return cupom.calcular_desconto(subtotal)
+        return Decimal('0.00')
+
+    def get_total_com_desconto(self):
+        """Retorna o total já com o desconto aplicado."""
+        return self.get_total_preco() - self.get_desconto()
+
+    # ─── Métodos do Carrinho ─────────────────────────────────────────────────
+
     def add(self, produto, quantidade=1, substituir_quantidade=False):
         """
         Adiciona um produto ao carrinho ou atualiza sua quantidade.

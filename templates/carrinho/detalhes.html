@@ -220,6 +220,72 @@
             background: var(--error);
             color: white;
         }
+        .cupom-form {
+            background: rgba(16, 185, 129, 0.06);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            border-radius: 10px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        .cupom-form label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        .cupom-input-row {
+            display: flex;
+            gap: 8px;
+        }
+        .cupom-input-row input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--surface);
+            color: var(--text);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .cupom-input-row input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .btn-aplicar {
+            padding: 10px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .btn-aplicar:hover { background: var(--primary-dark); }
+        .cupom-aplicado {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin: 12px 0;
+            font-size: 14px;
+        }
+        .cupom-codigo { font-weight: 700; color: var(--primary); }
+        .btn-remover-cupom {
+            background: none;
+            border: none;
+            color: var(--error, #ef4444);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 4px;
+        }
+        .resumo-desconto { color: var(--primary); font-weight: 600; }
         @media (max-width: 768px) {
             .carrinho-container {
                 grid-template-columns: 1fr;
@@ -327,10 +393,41 @@
                         <span>Subtotal ({{ carrinho|length }} {% if carrinho|length == 1 %}item{% else %}itens{% endif %})</span>
                         <span>R$ {{ carrinho.get_total_preco }}</span>
                     </div>
-                    
+
+                    <!-- Cupom -->
+                    {% with cupom=carrinho.cupom desconto=carrinho.get_desconto %}
+                    {% if cupom %}
+                        <div class="cupom-aplicado">
+                            <span><i class="fas fa-tag"></i> Cupom: <span class="cupom-codigo">{{ cupom.codigo }}</span></span>
+                            <form method="post" action="{% url 'carrinho:remover_cupom' %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-remover-cupom" title="Remover cupom">
+                                    <i class="fas fa-times-circle"></i>
+                                </button>
+                            </form>
+                        </div>
+                        <div class="resumo-linha">
+                            <span>Desconto</span>
+                            <span class="resumo-desconto">- R$ {{ desconto }}</span>
+                        </div>
+                    {% else %}
+                        <div class="cupom-form">
+                            <label for="cupom-codigo"><i class="fas fa-tag"></i> Tem um cupom?</label>
+                            <form method="post" action="{% url 'carrinho:aplicar_cupom' %}">
+                                {% csrf_token %}
+                                <div class="cupom-input-row">
+                                    <input type="text" id="cupom-codigo" name="codigo"
+                                           placeholder="CÓDIGO DO CUPOM" maxlength="50" autocomplete="off">
+                                    <button type="submit" class="btn-aplicar">Aplicar</button>
+                                </div>
+                            </form>
+                        </div>
+                    {% endif %}
+                    {% endwith %}
+
                     <div class="resumo-linha resumo-total">
                         <span>Total</span>
-                        <span class="valor">R$ {{ carrinho.get_total_preco }}</span>
+                        <span class="valor">R$ {{ carrinho.get_total_com_desconto }}</span>
                     </div>
                     
                     <a href="{% url 'checkout:checkout' %}" class="btn-finalizar">

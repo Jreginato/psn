@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confirmação de Compra - EvolutyApp</title>
+</head>
+<body style="margin:0;padding:0;background:#0a1628;font-family:'Inter',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a1628;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="580" cellpadding="0" cellspacing="0" style="background:linear-gradient(165deg,#152746,#0f1b30);border:1px solid rgba(51,212,255,0.3);border-radius:16px;padding:40px;max-width:580px;width:100%;">
+
+          <!-- Header -->
+          <tr>
+            <td align="center" style="padding-bottom:28px;border-bottom:1px solid rgba(255,255,255,0.1);">
+              <h1 style="margin:0 0 4px;font-size:30px;font-weight:700;color:#10b981;">Evoluty<span style="color:#33d4ff;">App</span></h1>
+              <p style="margin:0;font-size:13px;color:#64748b;">Confirmação de Compra</p>
+            </td>
+          </tr>
+
+          <!-- Saudação -->
+          <tr>
+            <td style="padding:32px 0 0;">
+              <p style="margin:0 0 8px;font-size:22px;font-weight:600;color:#e2e8f0;">🎉 Compra confirmada!</p>
+              <p style="margin:0 0 24px;font-size:15px;color:#94a3b8;line-height:1.6;">
+                Olá, <strong style="color:#e2e8f0;">{{ nome_cliente }}</strong>!<br>
+                Seu pagamento foi aprovado com sucesso. Confira os detalhes abaixo:
+              </p>
+            </td>
+          </tr>
+
+          <!-- Card do Pedido -->
+          <tr>
+            <td style="padding-bottom:24px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:20px;">
+                <tr>
+                  <td>
+                    <p style="margin:0 0 12px;font-size:13px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Pedido #{{ pedido.id }}</p>
+                    {% for item in itens %}
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
+                      <tr>
+                        <td style="font-size:15px;color:#e2e8f0;font-weight:500;">{{ item.nome_produto }}</td>
+                        <td align="right" style="font-size:15px;color:#e2e8f0;white-space:nowrap;">R$ {{ item.preco_unitario }}</td>
+                      </tr>
+                    </table>
+                    {% endfor %}
+                    <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:12px 0;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="font-size:16px;color:#e2e8f0;font-weight:700;">Total</td>
+                        <td align="right" style="font-size:18px;color:#10b981;font-weight:700;">R$ {{ pedido.total }}</td>
+                      </tr>
+                    </table>
+                    <p style="margin:12px 0 0;font-size:13px;color:#64748b;">Método: {{ pedido.metodo_pagamento|default:"Mercado Pago" }}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- CTA Acesso -->
+          <tr>
+            <td style="padding-bottom:28px;">
+              <p style="margin:0 0 16px;font-size:15px;color:#94a3b8;line-height:1.6;">
+                Seu acesso já está disponível. Acesse o seu painel para começar agora mesmo!
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="{{ base_url }}/dashboard/"
+                       style="display:inline-block;background:#10b981;color:white;text-decoration:none;padding:14px 36px;border-radius:8px;font-size:16px;font-weight:600;">
+                      Acessar meu painel
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding-top:24px;border-top:1px solid rgba(255,255,255,0.1);">
+              <p style="margin:0 0 4px;font-size:13px;color:#475569;">Dúvidas? Fale com a gente pelo WhatsApp.</p>
+              <p style="margin:0;font-size:13px;color:#475569;">© 2026 EvolutyApp. Todos os direitos reservados.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

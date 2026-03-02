@@ -191,6 +191,19 @@ class Pedido(models.Model):
     # Cliente
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='pedidos')
     
+    # Cupom aplicado
+    cupom = models.ForeignKey(
+        'carrinho.Cupom',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='pedidos',
+        verbose_name='Cupom'
+    )
+    codigo_cupom = models.CharField(
+        max_length=50, blank=True,
+        help_text="Código do cupom (preservado mesmo se o cupom for excluído)"
+    )
+
     # Valores
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
     desconto = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))

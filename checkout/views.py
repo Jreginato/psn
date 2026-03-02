@@ -25,6 +25,40 @@ logger = logging.getLogger('mercadopago')
 security_logger = logging.getLogger('security')
 
 
+def _enviar_email_confirmacao(pedido):
+    """Envia e-mail de confirmação de compra ao cliente após aprovação."""
+    try:
+        from django.core.mail import EmailMultiAlternatives
+        from django.template.loader import render_to_string
+        from django.conf import settings
+
+        nome_cliente = pedido.nome_compra or pedido.usuario.get_full_name() or pedido.usuario.email
+        itens = pedido.itens.all()
+        base_url = getattr(settings, 'MERCADOPAGO_BASE_URL', '') or ''
+
+        context = {
+            'pedido': pedido,
+            'itens': itens,
+            'nome_cliente': nome_cliente,
+            'base_url': base_url,
+        }
+
+        assunto = f'EvolutyApp - Confirmação do Pedido #{pedido.id}'
+        corpo_html = render_to_string('emails/confirmacao_compra.html', context)
+
+        email = EmailMultiAlternatives(
+            subject=assunto,
+            body=f'Seu pedido #{pedido.id} foi aprovado! Acesse seu painel: {base_url}/dashboard/',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[pedido.email_compra],
+        )
+        email.attach_alternative(corpo_html, 'text/html')
+        email.send(fail_silently=True)
+        logger.info(f'✉️ E-mail de confirmação enviado para {pedido.email_compra} - Pedido #{pedido.id}')
+    except Exception as e:
+        logger.error(f'Erro ao enviar e-mail de confirmação do pedido #{pedido.id}: {e}')
+
+
 def _normalizar_statement_descriptor(valor: str) -> str:
     """
     Mercado Pago aceita statement descriptor com no máximo 13 caracteres.
@@ -88,6 +122,7 @@ def _sincronizar_status_retorno_mp(request, pedido):
             pedido.aprovado_em = timezone.now()
             pedido.save()
             pedido.liberar_acesso_produtos()
+            _enviar_email_confirmacao(pedido)
     elif status_mp in ('rejected', 'cancelled'):
         if pedido.status != 'cancelado':
             pedido.status = 'cancelado'
@@ -110,12 +145,16 @@ def checkout(request):
         messages.warning(request, 'Seu carrinho está vazio!')
         return redirect('produtos:catalogo')
     
-    # Calcula o total
-    total = carrinho.get_total_preco()
+    subtotal = carrinho.get_total_preco()
+    desconto = carrinho.get_desconto()
+    total = carrinho.get_total_com_desconto()
     
     context = {
         'carrinho': carrinho,
+        'subtotal': subtotal,
+        'desconto': desconto,
         'total': total,
+        'cupom': carrinho.cupom,
     }
     
     return render(request, 'checkout/checkout.html', context)
@@ -136,7 +175,14 @@ def processar_pedido(request):
     
     # Calcula valores
     subtotal = carrinho.get_total_preco()
+    cupom = carrinho.cupom  # pode ser None
     desconto = Decimal('0.00')
+    codigo_cupom = ''
+
+    if cupom and cupom.esta_valido and subtotal >= cupom.valor_minimo_pedido:
+        desconto = cupom.calcular_desconto(subtotal)
+        codigo_cupom = cupom.codigo
+
     total = subtotal - desconto
     
     # Busca pedido pendente/processando do usuário
@@ -150,6 +196,8 @@ def processar_pedido(request):
         pedido.email_compra = request.user.email
         pedido.nome_compra = request.user.get_full_name() or request.user.email
         pedido.metodo_pagamento = 'Mercado Pago'
+        pedido.cupom = cupom
+        pedido.codigo_cupom = codigo_cupom
         pedido.save()
     else:
         pedido = Pedido.objects.create(
@@ -160,7 +208,9 @@ def processar_pedido(request):
             status='pendente',
             email_compra=request.user.email,
             nome_compra=request.user.get_full_name() or request.user.email,
-            metodo_pagamento='Mercado Pago'
+            metodo_pagamento='Mercado Pago',
+            cupom=cupom,
+            codigo_cupom=codigo_cupom,
         )
 
     # Cria os itens do pedido (sempre reflete o carrinho atual)
@@ -182,12 +232,22 @@ def processar_pedido(request):
             "currency_id": "BRL",
         })
         total_verificacao += item['total_preco']
-    
-    # VALIDAÇÃO: Garantir que o total bate
-    if abs(total_verificacao - total) > Decimal('0.01'):
+
+    # Aplica desconto do cupom no payload do Mercado Pago (item com valor negativo)
+    if desconto > Decimal('0.00'):
+        nome_cupom = f'Cupom {codigo_cupom}' if codigo_cupom else 'Desconto'
+        items_mp.append({
+            "title": nome_cupom[:120],
+            "quantity": 1,
+            "unit_price": -float(desconto),
+            "currency_id": "BRL",
+        })
+
+    # VALIDAÇÃO: items somam ao subtotal; total = subtotal - desconto
+    if abs(total_verificacao - subtotal) > Decimal('0.01'):
         security_logger.critical(
             f'ALERTA: Divergência de valores ao criar pedido #{pedido.id}. '
-            f'Total calculado: {total_verificacao}, Total do pedido: {total}'
+            f'Subtotal calculado: {total_verificacao}, Subtotal do pedido: {subtotal}'
         )
         pedido.delete()
         messages.error(request, 'Erro ao processar pedido. Por favor, tente novamente.')
@@ -385,7 +445,14 @@ def processar_pedido(request):
         pedido.transaction_id = preference["id"]
         pedido.save()
         
-        # Limpa o carrinho
+        # Incrementa uso do cupom e limpa o carrinho
+        if cupom:
+            try:
+                cupom.total_usado += 1
+                cupom.save(update_fields=['total_usado'])
+            except Exception as e:
+                logger.warning(f'Falha ao incrementar total_usado do cupom {codigo_cupom}: {e}')
+        carrinho.clear_cupom()
         carrinho.clear()
         
         logger.info(f'Pedido #{pedido.id} criado. Redirecionando para Mercado Pago...')
@@ -614,7 +681,8 @@ def webhook(request):
                 
                 # Libera acesso aos produtos
                 pedido.liberar_acesso_produtos()
-                
+                # Envia e-mail de confirmação
+                _enviar_email_confirmacao(pedido)                
                 logger.info(f'✅ Pedido #{pedido.id} APROVADO - Pagamento {payment_id} - R$ {valor_pago}')
                 security_logger.info(f'Acesso liberado para pedido #{pedido.id} - Usuário: {pedido.usuario.email}')
                 
