@@ -50,8 +50,8 @@ DEBUG = IS_DEVELOPMENT
 # Hosts permitidos
 if IS_PRODUCTION:
     ALLOWED_HOSTS = [
-        os.environ.get('ALLOWED_HOST', 'seusite.pythonanywhere.com'),
-        'www.' + os.environ.get('ALLOWED_HOST', 'seusite.pythonanywhere.com'),
+        os.environ.get('ALLOWED_HOST', 'jreginato93.pythonanywhere.com'),
+        'www.' + os.environ.get('ALLOWED_HOST', 'jreginato93.pythonanywhere.com'),
     ]
 else:
     ALLOWED_HOSTS = ['*']  # Permite qualquer host em desenvolvimento
