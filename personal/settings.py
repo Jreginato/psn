@@ -158,11 +158,8 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
-# STATIC_ROOT é necessário para produção (collectstatic)
-if IS_PRODUCTION:
-    STATIC_ROOT = BASE_DIR / 'staticfiles'
-else:
-    STATIC_ROOT = None  # Não necessário em desenvolvimento
+# STATIC_ROOT necessário para collectstatic (produção e dev)
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Media files (Uploads)
 MEDIA_URL = 'media/'
