@@ -19,6 +19,13 @@ import socket
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
+# Valores padrão de e-mail (usados quando não há .env ou variável de ambiente definida)
+os.environ.setdefault('EMAIL_HOST', 'smtp.gmail.com')
+os.environ.setdefault('EMAIL_PORT', '587')
+os.environ.setdefault('EMAIL_HOST_USER', 'jreginato93@gmail.com')
+os.environ.setdefault('EMAIL_HOST_PASSWORD', 'przi iuiv iqca ukvs')
+os.environ.setdefault('DEFAULT_FROM_EMAIL', 'EvolutyApp <jreginato93@gmail.com>')
+
 
 # =============================================================================
 # ENVIRONMENT - Determina se está em DESENVOLVIMENTO ou PRODUÇÃO
