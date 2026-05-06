@@ -233,11 +233,16 @@ class Pedido(models.Model):
     
     def liberar_acesso_produtos(self):
         """Libera acesso aos produtos quando o pedido é aprovado"""
+        from django.db.models import F
         for item in self.itens.all():
-            AcessoProduto.objects.get_or_create(
+            _, created = AcessoProduto.objects.get_or_create(
                 usuario=self.usuario,
                 produto=item.produto
             )
+            if created:
+                Produto.objects.filter(pk=item.produto_id).update(
+                    total_vendas=F('total_vendas') + 1
+                )
 
 
 class ItemPedido(models.Model):

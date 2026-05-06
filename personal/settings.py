@@ -24,7 +24,7 @@ os.environ.setdefault('EMAIL_HOST', 'smtp.gmail.com')
 os.environ.setdefault('EMAIL_PORT', '587')
 os.environ.setdefault('EMAIL_HOST_USER', 'jreginato93@gmail.com')
 os.environ.setdefault('EMAIL_HOST_PASSWORD', 'przi iuiv iqca ukvs')
-os.environ.setdefault('DEFAULT_FROM_EMAIL', 'EvolutyApp <jreginato93@gmail.com>')
+os.environ.setdefault('DEFAULT_FROM_EMAIL', 'Julio Reginato <jreginato93@gmail.com>')
 
 
 # =============================================================================
@@ -73,6 +73,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'nested_admin',
     'accounts',
     'agendamento',
     'produtos',
@@ -255,7 +256,7 @@ MERCADOPAGO_STATEMENT_DESCRIPTOR = 'EVOLUTYAPP'  # Aparece na fatura do cartão 
 #   EMAIL_PORT=587
 #   EMAIL_HOST_USER=seuemail@gmail.com
 #   EMAIL_HOST_PASSWORD=sua_senha_de_app
-#   DEFAULT_FROM_EMAIL=EvolutyApp <seuemail@gmail.com>
+#   DEFAULT_FROM_EMAIL=Julio Reginato <seuemail@gmail.com>
 # =============================================================================
 
 if IS_PRODUCTION:
@@ -265,7 +266,7 @@ if IS_PRODUCTION:
     EMAIL_USE_TLS = True
     EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
     EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-    DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'EvolutyApp <noreply@evolutyapp.com>')
+    DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Julio Reginato <noreply@evolutyapp.com>')
 else:
     # Desenvolvimento: usa SMTP se EMAIL_HOST_USER estiver definido no .env, senão imprime no terminal
     if os.environ.get('EMAIL_HOST_USER', ''):
@@ -275,10 +276,10 @@ else:
         EMAIL_USE_TLS = True
         EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
         EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-        DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'EvolutyApp <noreply@evolutyapp.com>')
+        DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Julio Reginato <noreply@evolutyapp.com>')
     else:
         EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-        DEFAULT_FROM_EMAIL = 'EvolutyApp <noreply@evolutyapp.com>'
+        DEFAULT_FROM_EMAIL = 'Julio Reginato <noreply@evolutyapp.com>'
 
 # =============================================================================
 # CONFIGURAÇÕES DE SEGURANÇA - AUTOMÁTICAS POR AMBIENTE

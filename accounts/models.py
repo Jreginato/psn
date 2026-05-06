@@ -174,3 +174,72 @@ class ExercicioTreino(models.Model):
     
     def __str__(self):
         return f"{self.exercicio.nome} - {self.series}x{self.repeticoes}"
+
+
+# ===== SESSÃO DE TREINO (EXECUÇÃO) =====
+
+class SessaoTreino(models.Model):
+    STATUS_CHOICES = [
+        ('em_andamento', 'Em Andamento'),
+        ('concluida', 'Concluída'),
+        ('abandonada', 'Abandonada'),
+    ]
+
+    usuario = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='sessoes_treino',
+        verbose_name='Usuário'
+    )
+    dia_treino = models.ForeignKey(
+        DiaTreino,
+        on_delete=models.CASCADE,
+        related_name='sessoes',
+        verbose_name='Dia de Treino'
+    )
+    status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default='em_andamento')
+    iniciado_em = models.DateTimeField('Iniciado em', auto_now_add=True)
+    finalizado_em = models.DateTimeField('Finalizado em', null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Sessão de Treino'
+        verbose_name_plural = 'Sessões de Treino'
+        ordering = ['-iniciado_em']
+
+    def __str__(self):
+        return f"{self.usuario.username} — {self.dia_treino.nome} ({self.iniciado_em.strftime('%d/%m/%Y')})"
+
+    @property
+    def duracao_segundos(self):
+        if self.finalizado_em:
+            return int((self.finalizado_em - self.iniciado_em).total_seconds())
+        return None
+
+
+class SerieRealizada(models.Model):
+    sessao = models.ForeignKey(
+        SessaoTreino,
+        on_delete=models.CASCADE,
+        related_name='series',
+        verbose_name='Sessão'
+    )
+    exercicio_treino = models.ForeignKey(
+        ExercicioTreino,
+        on_delete=models.CASCADE,
+        related_name='series_realizadas',
+        verbose_name='Exercício do Treino'
+    )
+    numero_serie = models.IntegerField('Número da Série')
+    carga_usada = models.CharField('Carga Usada', max_length=50, blank=True)
+    repeticoes_realizadas = models.CharField('Repetições Realizadas', max_length=50, blank=True)
+    concluida_em = models.DateTimeField('Concluída em', null=True, blank=True)
+    tempo_descanso_segundos = models.IntegerField('Descanso Real (s)', null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Série Realizada'
+        verbose_name_plural = 'Séries Realizadas'
+        ordering = ['exercicio_treino__ordem', 'numero_serie']
+        unique_together = ['sessao', 'exercicio_treino', 'numero_serie']
+
+    def __str__(self):
+        return f"Série {self.numero_serie} — {self.exercicio_treino.exercicio.nome}"

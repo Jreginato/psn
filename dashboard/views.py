@@ -1,9 +1,12 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+import json
 from produtos.models import AcessoProduto, Produto, Pedido
 
 
@@ -306,5 +309,105 @@ def consultoria_medicacao(request):
         'user_produtos': user_produtos,
     }
     return render(request, 'dashboard/consultoria/medicacao.html', context)
+
+
+# ===== SESSÃO DE TREINO =====
+
+@login_required
+def sessao_executar(request, dia_id):
+    """Tela de execução do treino — timer + séries"""
+    if not request.user.tem_consultoria_online():
+        messages.error(request, 'Você não tem acesso à consultoria online.')
+        return redirect('dashboard:home')
+
+    from accounts.models import DiaTreino, SessaoTreino
+    dia = get_object_or_404(
+        DiaTreino.objects.select_related('treino__consultoria__usuario'),
+        pk=dia_id,
+        treino__consultoria__usuario=request.user
+    )
+
+    # Sessão em andamento ou cria nova
+    sessao = SessaoTreino.objects.filter(
+        usuario=request.user,
+        dia_treino=dia,
+        status='em_andamento'
+    ).first()
+    if not sessao:
+        sessao = SessaoTreino.objects.create(usuario=request.user, dia_treino=dia)
+
+    exercicios = dia.exercicios.select_related('exercicio').order_by('ordem')
+
+    # Séries já marcadas nesta sessão
+    from accounts.models import SerieRealizada
+    series_feitas = SerieRealizada.objects.filter(sessao=sessao).values(
+        'exercicio_treino_id', 'numero_serie', 'carga_usada', 'repeticoes_realizadas'
+    )
+    series_map = {}
+    for s in series_feitas:
+        series_map[(s['exercicio_treino_id'], s['numero_serie'])] = s
+
+    user_produtos = AcessoProduto.objects.filter(
+        usuario=request.user, ativo=True
+    ).select_related('produto')[:10]
+
+    context = {
+        'dia': dia,
+        'sessao': sessao,
+        'exercicios': exercicios,
+        'series_map_json': json.dumps({
+            f"{k[0]}_{k[1]}": v for k, v in series_map.items()
+        }),
+        'user_produtos': user_produtos,
+    }
+    return render(request, 'dashboard/consultoria/sessao_executar.html', context)
+
+
+@login_required
+@require_POST
+def sessao_marcar_serie(request, sessao_id):
+    """API: marca uma série como concluída"""
+    from accounts.models import SessaoTreino, SerieRealizada, ExercicioTreino
+    sessao = get_object_or_404(SessaoTreino, pk=sessao_id, usuario=request.user, status='em_andamento')
+
+    try:
+        data = json.loads(request.body)
+        exercicio_treino_id = int(data['exercicio_treino_id'])
+        numero_serie = int(data['numero_serie'])
+        carga_usada = str(data.get('carga_usada', ''))[:50]
+        repeticoes_realizadas = str(data.get('repeticoes_realizadas', ''))[:50]
+        tempo_descanso = data.get('tempo_descanso_segundos')
+        if tempo_descanso is not None:
+            tempo_descanso = int(tempo_descanso)
+    except (KeyError, ValueError, TypeError):
+        return JsonResponse({'ok': False, 'erro': 'Dados inválidos.'}, status=400)
+
+    et = get_object_or_404(ExercicioTreino, pk=exercicio_treino_id, dia_treino__treino__consultoria__usuario=request.user)
+
+    serie, created = SerieRealizada.objects.update_or_create(
+        sessao=sessao,
+        exercicio_treino=et,
+        numero_serie=numero_serie,
+        defaults={
+            'carga_usada': carga_usada,
+            'repeticoes_realizadas': repeticoes_realizadas,
+            'concluida_em': timezone.now(),
+            'tempo_descanso_segundos': tempo_descanso,
+        }
+    )
+    return JsonResponse({'ok': True, 'criado': created})
+
+
+@login_required
+@require_POST
+def sessao_finalizar(request, sessao_id):
+    """API: finaliza a sessão de treino"""
+    from accounts.models import SessaoTreino
+    sessao = get_object_or_404(SessaoTreino, pk=sessao_id, usuario=request.user, status='em_andamento')
+    sessao.status = 'concluida'
+    sessao.finalizado_em = timezone.now()
+    sessao.save()
+    return JsonResponse({'ok': True})
+
 
 

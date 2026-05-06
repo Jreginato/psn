@@ -16,4 +16,9 @@ urlpatterns = [
     path('consultoria/treino/excel/', views.consultoria_treino_excel, name='consultoria_treino_excel'),
     path('consultoria/plano-alimentar/', views.consultoria_plano_alimentar, name='consultoria_plano_alimentar'),
     path('consultoria/medicacao/', views.consultoria_medicacao, name='consultoria_medicacao'),
+
+    # Sessão de treino (execução com timer)
+    path('consultoria/executar/<int:dia_id>/', views.sessao_executar, name='sessao_executar'),
+    path('consultoria/sessao/<int:sessao_id>/serie/', views.sessao_marcar_serie, name='sessao_marcar_serie'),
+    path('consultoria/sessao/<int:sessao_id>/finalizar/', views.sessao_finalizar, name='sessao_finalizar'),
 ]

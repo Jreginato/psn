@@ -4,14 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Área de Clientes - EvolutyApp">
+    <meta name="description" content="Área de Clientes - <span class="brand-accent">Julio Reginato</span>">
     
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#10b981" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="EvolutyApp" />
+    <meta name="apple-mobile-web-app-title" content="<span class="brand-accent">Julio Reginato</span>" />
     
     <!-- Manifest -->
     <link rel="manifest" href="{% static 'manifest.json' %}" />
@@ -24,7 +24,7 @@
     <link rel="apple-touch-icon" sizes="152x152" href="{% static 'icons/icon-152x152.png' %}" />
     <link rel="apple-touch-icon" sizes="192x192" href="{% static 'icons/icon-192x192.png' %}" />
     
-    <title>{% block title %}Área de Clientes{% endblock %} | EvolutyApp</title>
+    <title>{% block title %}Área de Clientes{% endblock %} | <span class="brand-accent">Julio Reginato</span></title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -42,7 +42,7 @@
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <a href="{% url 'sales' %}" class="sidebar-brand">
-                <span class="brand-text">Evoluty<span class="brand-accent">App</span></span>
+                <span class="brand-text"><span class="brand-accent">Julio Reginato</span></span>
             </a>
             <button class="sidebar-toggle" id="sidebarToggle">
                 <i class="fas fa-bars"></i>
@@ -86,7 +86,7 @@
                 <div class="alert alert-info" style="display: flex; align-items: center; gap: 10px;">
                     <img src="https://img.icons8.com/ios-filled/50/000000/iphone.png" alt="iOS" style="height:32px;">
                     <div>
-                        <strong>Instale o EvolutyApp no seu iPhone!</strong><br>
+                        <strong>Instale o <span class="brand-accent">Julio Reginato</span> no seu iPhone!</strong><br>
                         Para instalar o app na tela inicial do iOS, é necessário usar o navegador Safari.<br>
                         <span id="ios-pwa-safari-instructions" style="display:none;">
                             <br>Para instalar:
@@ -110,7 +110,7 @@
                 <div class="alert alert-success" style="display: flex; align-items: center; gap: 10px;">
                     <img src="https://img.icons8.com/color/48/000000/android-os.png" alt="Android" style="height:32px;">
                     <div>
-                        <strong>Instale o EvolutyApp no seu Android!</strong><br>
+                        <strong>Instale o <span class="brand-accent">Julio Reginato</span> no seu Android!</strong><br>
                         Para uma experiência melhor, adicione o app à tela inicial:<br>
                         <ol style="margin: 0 0 0 18px; padding: 0;">
                             <li>Toque no ícone <b>⋮</b> no canto superior direito do Chrome.</li>
@@ -231,7 +231,7 @@
 
             {% block content %}{% endblock %}
                     <div id="install-app-content" style="display:none; max-width:600px; margin:0 auto;">
-                        <h2 style="margin-top:0; font-size:1.5em;">Como instalar o EvolutyApp</h2>
+                        <h2 style="margin-top:0; font-size:1.5em;">Como instalar o <span class="brand-accent">Julio Reginato</span></h2>
                         <div class="pwa-instructions" style="font-size: 1.05em; color: #222;">
                             <b>Android (Chrome, Firefox, Edge, Opera...):</b>
                             <ol style="margin: 0 0 8px 18px; padding: 0;">
@@ -264,7 +264,7 @@
 
         <!-- Footer -->
         <footer class="dashboard-footer">
-            <p>&copy; 2026 EvolutyApp. Todos os direitos reservados.</p>
+            <p>&copy; 2026 <span class="brand-accent">Julio Reginato</span>. Todos os direitos reservados.</p>
             <div class="footer-links">
                 <a href="{% url 'sales' %}">Início</a>
                 <a href="#">Suporte</a>

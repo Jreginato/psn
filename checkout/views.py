@@ -43,7 +43,7 @@ def _enviar_email_confirmacao(pedido):
             'base_url': base_url,
         }
 
-        assunto = f'EvolutyApp - Confirmação do Pedido #{pedido.id}'
+        assunto = f'Julio Reginato - Confirmação do Pedido #{pedido.id}'
         corpo_html = render_to_string('emails/confirmacao_compra.html', context)
 
         email = EmailMultiAlternatives(

@@ -29,6 +29,7 @@ urlpatterns = [
     path('carrinho/', include('carrinho.urls')),
     path('checkout/', include('checkout.urls')),
     path('admin/', admin.site.urls),
+    path('nested_admin/', include('nested_admin.urls')),
 ]
 
 # Servir arquivos de media em desenvolvimento

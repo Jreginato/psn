@@ -52,6 +52,9 @@
                                     <p>{{ dia.descricao }}</p>
                                 {% endif %}
                             </div>
+                            <a href="{% url 'dashboard:sessao_executar' dia.pk %}" class="btn-iniciar-treino">
+                                <i class="fas fa-play-circle"></i> Iniciar Treino
+                            </a>
                         </div>
 
                         <div class="exercicios-lista">
@@ -277,6 +280,23 @@
     position: relative;
     z-index: 1;
 }
+
+.btn-iniciar-treino {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: linear-gradient(135deg, var(--accent), #2b7cff);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: opacity .2s;
+}
+.btn-iniciar-treino:hover { opacity: .85; color: #fff; }
 
 .dia-badge {
     width: 40px;

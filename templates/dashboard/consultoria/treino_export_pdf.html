@@ -75,11 +75,14 @@
             font-style: italic;
             color: #4b5563;
         }
+        .page-break {
+            page-break-before: always;
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="brand">Evoluty<span>App</span></div>
+        <div class="brand"><span>Julio Reginato</span></div>
         <div class="meta">Gerado em: {{ gerado_em|date:"d/m/Y H:i" }}</div>
         <div class="title">{{ treino_atual.titulo }}</div>
         <div class="subtitle">Aluno: {{ usuario.get_full_name|default:usuario.username }}</div>
@@ -89,7 +92,7 @@
     </div>
 
     {% for dia in treino_atual.dias.all %}
-        <div class="day">
+        <div class="day{% if not forloop.first %} page-break{% endif %}">
             <h3>{{ dia.nome }}</h3>
             {% if dia.descricao %}
                 <p>{{ dia.descricao }}</p>

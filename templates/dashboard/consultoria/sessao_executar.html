@@ -1,0 +1,970 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}{{ dia.nome }} — Em Execução{% endblock %}
+{% block page_title %}Executar Treino{% endblock %}
+
+{% block content %}
+<div class="exec-wrap">
+
+    <!-- ── HEADER STICKY ── -->
+    <div class="exec-header">
+        <div class="exec-header-left">
+            <a href="{% url 'dashboard:consultoria_treino' %}" class="btn-voltar" title="Voltar">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div>
+                <div class="exec-treino-nome">{{ dia.treino.titulo }}</div>
+                <div class="exec-dia-nome">{{ dia.nome }}</div>
+            </div>
+        </div>
+        <div class="exec-header-right">
+            <div class="exec-cronometro-wrap">
+                <i class="fas fa-stopwatch"></i>
+                <span id="cronometroGeral">00:00</span>
+            </div>
+            <button class="btn-finalizar" id="btnFinalizar">
+                <i class="fas fa-flag-checkered"></i>
+                <span class="btn-fin-label">Finalizar</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ── BARRA DE PROGRESSO GERAL ── -->
+    <div class="exec-prog-geral-wrap">
+        <div class="exec-prog-geral-bar" id="progGeralBar" style="width:0%"></div>
+    </div>
+
+    <!-- ── MODAL DESCANSO ── -->
+    <div class="descanso-overlay" id="descansoOverlay" style="display:none">
+        <div class="descanso-modal">
+            <div class="descanso-rings">
+                <svg class="ring-svg" viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="52" class="ring-bg"/>
+                    <circle cx="60" cy="60" r="52" class="ring-fill" id="ringFill"/>
+                </svg>
+                <div class="descanso-timer-inner">
+                    <span class="descanso-timer" id="descansoTimer">00:00</span>
+                    <span class="descanso-sublabel">descansando</span>
+                </div>
+            </div>
+            <div class="descanso-proxima" id="descansoProxima"></div>
+            <button class="btn-pular-descanso" id="btnPularDescanso">
+                <i class="fas fa-forward-step"></i> Pular descanso
+            </button>
+        </div>
+    </div>
+
+    <!-- ── LISTA DE EXERCÍCIOS ── -->
+    <div class="exec-body">
+        {% for item in exercicios %}
+        <div class="exec-exercicio"
+             id="exer-{{ item.pk }}"
+             data-exercicio-id="{{ item.pk }}"
+             data-series="{{ item.series }}"
+             data-descanso="{{ item.descanso }}"
+             data-carga-base="{{ item.carga }}">
+
+            <!-- Cabeçalho do exercício -->
+            <div class="exec-exer-header">
+                <div class="exec-exer-check-wrap">
+                    <div class="exec-exer-check" id="check-{{ item.pk }}">
+                        <i class="fas fa-check"></i>
+                    </div>
+                </div>
+                <div class="exec-exer-info">
+                    <div class="exec-exer-nome-row">
+                        <span class="exec-exer-nome">{{ item.exercicio.nome }}</span>
+                        {% if item.exercicio.link_video %}
+                        <a href="{{ item.exercicio.link_video }}" target="_blank"
+                           class="btn-video-mini" title="Ver demonstração">
+                            <i class="fas fa-play"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="exec-exer-meta">
+                        {% if item.exercicio.grupo_muscular %}
+                        <span class="tag tag-grupo">{{ item.exercicio.grupo_muscular }}</span>
+                        {% endif %}
+                        <span class="tag tag-prescrito">
+                            <i class="fas fa-layer-group"></i> {{ item.series }}x{{ item.repeticoes }}
+                        </span>
+                        {% if item.descanso %}
+                        <span class="tag tag-descanso">
+                            <i class="fas fa-clock"></i> {{ item.descanso }}
+                        </span>
+                        {% endif %}
+                        {% if item.carga %}
+                        <span class="tag tag-carga">
+                            <i class="fas fa-dumbbell"></i> {{ item.carga }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="exec-exer-progresso-wrap">
+                    <div class="exec-exer-progresso" id="prog-{{ item.pk }}">0/{{ item.series }}</div>
+                    <div class="exec-mini-prog">
+                        <div class="exec-mini-prog-fill" id="miniProg-{{ item.pk }}" style="width:0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            {% if item.observacao_especifica or item.exercicio.dica_execucao %}
+            <div class="exec-obs-wrap">
+                {% if item.observacao_especifica %}
+                <div class="exec-obs-item obs-personal">
+                    <i class="fas fa-clipboard-list"></i> {{ item.observacao_especifica }}
+                </div>
+                {% endif %}
+                {% if item.exercicio.dica_execucao %}
+                <div class="exec-obs-item obs-dica">
+                    <i class="fas fa-lightbulb"></i> {{ item.exercicio.dica_execucao }}
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Grid de séries (gerado por JS) -->
+            <div class="exec-series-grid" id="series-{{ item.pk }}"></div>
+
+        </div>
+        {% empty %}
+        <div class="exec-vazio">
+            <i class="fas fa-dumbbell"></i>
+            <p>Este dia ainda não tem exercícios cadastrados.</p>
+        </div>
+        {% endfor %}
+        <div style="height:24px"></div>
+    </div>
+
+</div>
+
+<style>
+:root {
+    --accent: #45d1a8;
+    --accent2: #2b7cff;
+    --bg: #0f151c;
+    --panel: #151d26;
+    --panel2: #111924;
+    --card: #1a2232;
+    --ink: #eaf2f6;
+    --muted: #7e8fa3;
+    --stroke: rgba(255,255,255,0.07);
+    --warn: #f59e0b;
+    --CIRC: 326.7;
+}
+
+.exec-wrap {
+    display: flex; flex-direction: column;
+    min-height: calc(100vh - 56px);
+    background: var(--bg); color: var(--ink);
+    padding-bottom: 32px;
+}
+
+/* ── HEADER ── */
+.exec-header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(15,21,28,0.94);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--stroke);
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px; gap: 12px;
+}
+.exec-header-left  { display: flex; align-items: center; gap: 10px; }
+.exec-header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+.btn-voltar {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: rgba(255,255,255,.06); color: var(--ink);
+    display: grid; place-items: center; text-decoration: none;
+    transition: background .2s;
+}
+.btn-voltar:hover { background: rgba(255,255,255,.12); color: var(--ink); }
+
+.exec-treino-nome { font-size: 10px; color: var(--muted); line-height: 1; margin-bottom: 2px; }
+.exec-dia-nome    { font-weight: 700; font-size: 15px; }
+
+.exec-cronometro-wrap {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 16px; font-weight: 800;
+    font-variant-numeric: tabular-nums; color: var(--accent);
+    background: rgba(69,209,168,.1); padding: 6px 10px;
+    border-radius: 8px; border: 1px solid rgba(69,209,168,.2);
+}
+
+.btn-finalizar {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    color: #fff; border: none; cursor: pointer;
+    padding: 8px 13px; border-radius: 8px;
+    font-weight: 700; font-size: 13px;
+    display: flex; align-items: center; gap: 6px;
+    transition: opacity .2s; white-space: nowrap;
+}
+.btn-finalizar:hover { opacity: .82; }
+
+/* ── BARRA PROGRESSO GERAL ── */
+.exec-prog-geral-wrap { height: 3px; background: rgba(255,255,255,.06); }
+.exec-prog-geral-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width .4s ease;
+}
+
+/* ── MODAL DESCANSO ── */
+.descanso-overlay {
+    position: fixed; inset: 0; z-index: 999;
+    background: rgba(5,10,16,.84); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+}
+.descanso-modal {
+    background: linear-gradient(160deg, #1d2b3a, #111924);
+    border: 1px solid rgba(69,209,168,.25); border-radius: 24px;
+    padding: 32px 24px; text-align: center;
+    width: min(320px, 88vw);
+    box-shadow: 0 24px 60px rgba(0,0,0,.6);
+}
+.descanso-rings { position: relative; width: 140px; height: 140px; margin: 0 auto 20px; }
+.ring-svg       { width: 140px; height: 140px; transform: rotate(-90deg); }
+.ring-bg        { fill: none; stroke: rgba(255,255,255,.07); stroke-width: 8; }
+.ring-fill {
+    fill: none; stroke: var(--accent); stroke-width: 8; stroke-linecap: round;
+    stroke-dasharray: 326.7; stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1s linear, stroke .3s;
+}
+.ring-fill.urgente { stroke: var(--warn); }
+.descanso-timer-inner {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 2px;
+}
+.descanso-timer {
+    font-size: 42px; font-weight: 900;
+    font-variant-numeric: tabular-nums; color: var(--ink); line-height: 1;
+}
+.descanso-timer.urgente { color: var(--warn); }
+.descanso-sublabel { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; }
+.descanso-proxima {
+    font-size: 12px; color: var(--muted); margin-bottom: 18px;
+    min-height: 18px; padding: 6px 12px;
+    background: rgba(255,255,255,.04); border-radius: 8px;
+}
+.btn-pular-descanso {
+    background: rgba(255,255,255,.08); border: 1px solid var(--stroke);
+    color: var(--ink); cursor: pointer;
+    padding: 10px 22px; border-radius: 10px;
+    font-size: 14px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 7px;
+    transition: background .2s;
+}
+.btn-pular-descanso:hover { background: rgba(255,255,255,.14); }
+
+/* ── BODY ── */
+.exec-body {
+    padding: 14px 14px 0;
+    display: flex; flex-direction: column; gap: 12px;
+}
+
+/* ── CARD EXERCÍCIO ── */
+.exec-exercicio {
+    background: var(--card); border: 1px solid var(--stroke);
+    border-radius: 16px; overflow: hidden;
+    transition: border-color .35s, box-shadow .35s;
+}
+.exec-exercicio.concluido {
+    border-color: rgba(69,209,168,.35);
+    box-shadow: 0 0 0 1px rgba(69,209,168,.1) inset;
+}
+
+.exec-exer-header {
+    display: flex; align-items: flex-start;
+    gap: 10px; padding: 14px 14px 10px;
+}
+.exec-exer-check-wrap { padding-top: 2px; flex-shrink: 0; }
+.exec-exer-check {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 2px solid rgba(69,209,168,.3); color: transparent;
+    display: grid; place-items: center; font-size: 12px;
+    transition: all .3s;
+}
+.exec-exercicio.concluido .exec-exer-check {
+    background: var(--accent); border-color: var(--accent); color: #0f151c;
+}
+
+.exec-exer-info { flex: 1; min-width: 0; }
+.exec-exer-nome-row {
+    display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap; margin-bottom: 6px;
+}
+.exec-exer-nome { font-weight: 700; font-size: 15px; }
+
+.btn-video-mini {
+    width: 24px; height: 24px; border-radius: 6px;
+    background: rgba(43,124,255,.2); color: #7eb0ff;
+    display: grid; place-items: center; text-decoration: none;
+    font-size: 9px; flex-shrink: 0; transition: background .2s;
+}
+.btn-video-mini:hover { background: rgba(43,124,255,.38); }
+
+.exec-exer-meta { display: flex; flex-wrap: wrap; gap: 5px; }
+.tag {
+    font-size: 10px; padding: 2px 7px; border-radius: 20px;
+    font-weight: 600; display: inline-flex; align-items: center; gap: 3px;
+}
+.tag-grupo     { background: rgba(255,178,102,.14); color: #ffb266; }
+.tag-prescrito { background: rgba(69,209,168,.14);  color: var(--accent); }
+.tag-descanso  { background: rgba(43,124,255,.14);  color: #7eb0ff; }
+.tag-carga     { background: rgba(255,255,255,.07); color: var(--muted); }
+
+.exec-exer-progresso-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.exec-exer-progresso { font-size: 11px; font-weight: 800; color: var(--muted); }
+.exec-exer-progresso.done { color: var(--accent); }
+.exec-mini-prog {
+    width: 36px; height: 4px; border-radius: 2px;
+    background: rgba(255,255,255,.08); overflow: hidden;
+}
+.exec-mini-prog-fill { height: 100%; border-radius: 2px; background: var(--accent); transition: width .4s; }
+
+.exec-obs-wrap { margin: 0 14px 10px; display: flex; flex-direction: column; gap: 4px; }
+.exec-obs-item {
+    font-size: 11px; padding: 5px 10px; border-radius: 8px;
+    display: flex; align-items: flex-start; gap: 6px; line-height: 1.4;
+}
+.obs-personal { background: rgba(69,209,168,.08); color: #a7edd8; border-left: 2px solid var(--accent); }
+.obs-dica     { background: rgba(251,191,36,.08);  color: #fde68a; border-left: 2px solid #f59e0b; }
+
+/* ── GRID DE SÉRIES ── */
+.exec-series-grid { display: flex; flex-direction: column; border-top: 1px solid var(--stroke); }
+.serie-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-bottom: 1px solid var(--stroke);
+    transition: background .2s;
+}
+.serie-row:last-child { border-bottom: none; }
+.serie-row.feita { background: rgba(69,209,168,.05); }
+.serie-num { width: 22px; text-align: center; font-size: 11px; font-weight: 800; color: var(--muted); flex-shrink: 0; }
+.serie-row.feita .serie-num { color: var(--accent); }
+
+.serie-field-group { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.serie-field-label { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.serie-input {
+    background: rgba(255,255,255,.06); border: 1px solid var(--stroke);
+    color: var(--ink); border-radius: 7px;
+    padding: 7px 9px; font-size: 13px; font-weight: 600;
+    width: 100%; min-width: 0; transition: border-color .2s, background .2s;
+}
+.serie-input::placeholder { color: rgba(126,143,163,.45); font-weight: 400; }
+.serie-input:focus { outline: none; border-color: var(--accent); background: rgba(69,209,168,.06); }
+
+.btn-serie-ok {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(69,209,168,.12); border: 1.5px solid rgba(69,209,168,.3);
+    color: var(--accent); cursor: pointer;
+    display: grid; place-items: center; flex-shrink: 0; font-size: 15px;
+    transition: background .2s, transform .15s;
+}
+.btn-serie-ok:hover  { background: rgba(69,209,168,.24); transform: scale(1.05); }
+.btn-serie-ok:active { transform: scale(.96); }
+.btn-serie-ok.feita  { background: var(--accent); border-color: var(--accent); color: #0f151c; }
+
+.exec-vazio { text-align: center; padding: 60px 24px; color: var(--muted); }
+.exec-vazio i { font-size: 38px; margin-bottom: 12px; display: block; opacity: .4; }
+
+@media (max-width: 420px) {
+    .btn-fin-label { display: none; }
+    .exec-dia-nome { font-size: 13px; }
+}
+</style>
+
+<script>
+const URLS = {
+    marcarSerie: "{% url 'dashboard:sessao_marcar_serie' sessao.pk %}",
+    finalizar:   "{% url 'dashboard:sessao_finalizar' sessao.pk %}",
+    treino:      "{% url 'dashboard:consultoria_treino' %}",
+};
+const CSRF = "{{ csrf_token }}";
+const SERIES_FEITAS = {{ series_map_json|safe }};
+const CIRC = 326.7;
+
+// ── CRONÔMETRO GERAL ──
+let seg = 0;
+const elCron = document.getElementById('cronometroGeral');
+setInterval(() => { elCron.textContent = fmt(++seg); }, 1000);
+function fmt(s) {
+    return `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+}
+
+// ── PROGRESSO GERAL ──
+let totalSer = 0, feitasSer = 0;
+document.querySelectorAll('.exec-exercicio').forEach(b => { totalSer += +b.dataset.series; });
+function atualizarProgGeral() {
+    document.getElementById('progGeralBar').style.width =
+        (totalSer > 0 ? (feitasSer / totalSer) * 100 : 0) + '%';
+}
+
+// ── PARSE DESCANSO ──
+function parseSeg(str) {
+    if (!str) return 60;
+    str = str.toLowerCase().trim();
+    let m;
+    if ((m = str.match(/^(\d+)\s*s/))) return +m[1];
+    if ((m = str.match(/(\d+)\s*[-a]\s*(\d+)\s*min/))) return Math.round((+m[1]+ +m[2])/2)*60;
+    if ((m = str.match(/^(\d+)\s*min/))) return +m[1]*60;
+    if ((m = str.match(/^(\d+)$/))) return +m[1];
+    return 60;
+}
+
+// ── TIMER DESCANSO ──
+let dInt = null, dTot = 0, dRest = 0, dCb = null;
+const elOv  = document.getElementById('descansoOverlay');
+const elDT  = document.getElementById('descansoTimer');
+const elRing= document.getElementById('ringFill');
+const elPrx = document.getElementById('descansoProxima');
+
+function iniciarDescanso(s, info, cb) {
+    clearInterval(dInt);
+    dTot = dRest = s; dCb = cb;
+    elPrx.textContent = info || '';
+    updDesc();
+    elOv.style.display = 'flex';
+    dInt = setInterval(() => { dRest--; updDesc(); if(dRest <= 0) stopDesc(true); }, 1000);
+}
+function updDesc() {
+    elDT.textContent = fmt(dRest);
+    const u = dRest <= 10;
+    elDT.classList.toggle('urgente', u);
+    elRing.classList.toggle('urgente', u);
+    elRing.style.strokeDashoffset = CIRC * (1 - dRest/dTot);
+}
+function stopDesc(cb) {
+    clearInterval(dInt); dInt = null;
+    elOv.style.display = 'none';
+    if (cb && dCb) dCb();
+}
+document.getElementById('btnPularDescanso').addEventListener('click', () => stopDesc(true));
+
+// ── CONSTRUIR SÉRIES ──
+document.querySelectorAll('.exec-exercicio').forEach(bloco => {
+    const eid   = +bloco.dataset.exercicioId;
+    const nSer  = +bloco.dataset.series;
+    const desc  = bloco.dataset.descanso;
+    const carga = bloco.dataset.cargaBase;
+    const grid  = document.getElementById(`series-${eid}`);
+
+    for (let n = 1; n <= nSer; n++) {
+        const prev = SERIES_FEITAS[`${eid}_${n}`];
+        if (prev) feitasSer++;
+        const row = document.createElement('div');
+        row.className = 'serie-row' + (prev ? ' feita' : '');
+        row.id = `sr-${eid}-${n}`;
+        row.innerHTML = `
+          <span class="serie-num">${n}</span>
+          <div class="serie-field-group">
+            <span class="serie-field-label">Carga</span>
+            <input class="serie-input" type="text" id="c-${eid}-${n}"
+              placeholder="${carga || 'ex: 20kg'}"
+              value="${prev ? (prev.carga_usada||'') : ''}" inputmode="text">
+          </div>
+          <div class="serie-field-group">
+            <span class="serie-field-label">Reps</span>
+            <input class="serie-input" type="text" id="r-${eid}-${n}"
+              placeholder="reps"
+              value="${prev ? (prev.repeticoes_realizadas||'') : ''}" inputmode="numeric">
+          </div>
+          <button class="btn-serie-ok${prev ? ' feita' : ''}"
+            id="btn-${eid}-${n}" data-exer="${eid}" data-n="${n}" data-desc="${desc}">
+            <i class="fas fa-check"></i>
+          </button>`;
+        grid.appendChild(row);
+    }
+    updProg(eid, nSer);
+});
+atualizarProgGeral();
+
+// ── MARCAR SÉRIE ──
+document.addEventListener('click', e => {
+    const btn = e.target.closest('.btn-serie-ok');
+    if (!btn) return;
+    const eid  = +btn.dataset.exer;
+    const n    = +btn.dataset.n;
+    const desc = btn.dataset.desc;
+    const c = document.getElementById(`c-${eid}-${n}`).value;
+    const r = document.getElementById(`r-${eid}-${n}`).value;
+
+    fetch(URLS.marcarSerie, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify({ exercicio_treino_id: eid, numero_serie: n, carga_usada: c, repeticoes_realizadas: r, tempo_descanso_segundos: null }),
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.ok) return;
+        document.getElementById(`sr-${eid}-${n}`).classList.add('feita');
+        btn.classList.add('feita');
+        feitasSer++;
+        const bloco = document.getElementById(`exer-${eid}`);
+        updProg(eid, +bloco.dataset.series);
+        atualizarProgGeral();
+
+        const nextN = n + 1;
+        const nSer  = +bloco.dataset.series;
+        let info = '';
+        if (nextN <= nSer) {
+            info = `Próxima: Série ${nextN} de ${nSer}`;
+        } else {
+            const all = [...document.querySelectorAll('.exec-exercicio')];
+            const idx = all.indexOf(bloco);
+            info = idx + 1 < all.length
+                ? `Próximo: ${all[idx+1].querySelector('.exec-exer-nome').textContent}`
+                : '🎉 Último exercício concluído!';
+        }
+        iniciarDescanso(parseSeg(desc), info, () => {
+            const ni = document.getElementById(`c-${eid}-${nextN}`);
+            if (ni) { ni.focus(); ni.select(); }
+        });
+    });
+});
+
+function updProg(eid, total) {
+    const f = document.querySelectorAll(`#series-${eid} .btn-serie-ok.feita`).length;
+    document.getElementById(`prog-${eid}`).textContent = `${f}/${total}`;
+    document.getElementById(`prog-${eid}`).classList.toggle('done', f === total);
+    document.getElementById(`miniProg-${eid}`).style.width = (total > 0 ? f/total*100 : 0) + '%';
+    document.getElementById(`exer-${eid}`).classList.toggle('concluido', f === total);
+}
+
+// ── FINALIZAR ──
+document.getElementById('btnFinalizar').addEventListener('click', () => {
+    if (!confirm('Finalizar o treino de hoje?')) return;
+    fetch(URLS.finalizar, { method: 'POST', headers: { 'X-CSRFToken': CSRF } })
+    .then(r => r.json())
+    .then(d => { if (d.ok) window.location.href = URLS.treino; });
+});
+</script>
+
+.exec-wrap {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 60px);
+    background: var(--bg);
+    color: var(--ink);
+    padding-bottom: 40px;
+}
+
+/* ── HEADER ── */
+.exec-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--panel);
+    border-bottom: 1px solid var(--stroke);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    gap: 12px;
+}
+.exec-header-left { display: flex; align-items: center; gap: 12px; }
+.exec-header-right { display: flex; align-items: center; gap: 12px; }
+
+.btn-voltar {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    color: var(--ink);
+    display: grid; place-items: center;
+    text-decoration: none;
+    transition: background .2s;
+}
+.btn-voltar:hover { background: rgba(255,255,255,0.12); color: var(--ink); }
+
+.exec-treino-nome { font-size: 11px; color: var(--muted); }
+.exec-dia-nome { font-weight: 700; font-size: 16px; }
+
+.exec-cronometro-wrap {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums;
+    color: var(--accent);
+}
+
+.btn-finalizar {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    color: #fff;
+    border: none; cursor: pointer;
+    padding: 8px 14px; border-radius: 8px;
+    font-weight: 600; font-size: 13px;
+    display: flex; align-items: center; gap: 6px;
+    transition: opacity .2s;
+}
+.btn-finalizar:hover { opacity: .85; }
+
+/* ── OVERLAY DE DESCANSO ── */
+.descanso-overlay {
+    position: fixed; inset: 0; z-index: 999;
+    background: rgba(0,0,0,.75);
+    display: flex; align-items: center; justify-content: center;
+}
+.descanso-modal {
+    background: var(--panel);
+    border: 1px solid var(--stroke);
+    border-radius: 20px;
+    padding: 36px 28px;
+    text-align: center;
+    width: min(340px, 90vw);
+}
+.descanso-icon { font-size: 36px; color: var(--accent); margin-bottom: 8px; }
+.descanso-label { color: var(--muted); font-size: 13px; margin-bottom: 4px; }
+.descanso-timer {
+    font-size: 60px; font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink); line-height: 1;
+    margin-bottom: 16px;
+}
+.descanso-timer.urgente { color: var(--warn); }
+.descanso-prog-wrap {
+    height: 6px; border-radius: 3px;
+    background: rgba(255,255,255,0.1);
+    margin-bottom: 12px; overflow: hidden;
+}
+.descanso-prog-bar {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    width: 100%;
+    transition: width 1s linear;
+}
+.descanso-proxima { font-size: 12px; color: var(--muted); margin-bottom: 18px; min-height: 18px; }
+.btn-pular-descanso {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--stroke);
+    color: var(--ink); cursor: pointer;
+    padding: 10px 20px; border-radius: 10px;
+    font-size: 14px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: background .2s;
+}
+.btn-pular-descanso:hover { background: rgba(255,255,255,0.14); }
+
+/* ── BODY ── */
+.exec-body {
+    padding: 16px;
+    display: flex; flex-direction: column; gap: 16px;
+}
+
+.exec-exercicio {
+    background: var(--panel2);
+    border: 1px solid var(--stroke);
+    border-radius: 14px;
+    padding: 16px;
+    transition: border-color .3s;
+}
+.exec-exercicio.concluido { border-color: rgba(69,209,168,.4); }
+
+.exec-exer-header {
+    display: flex; align-items: flex-start;
+    justify-content: space-between; gap: 12px; margin-bottom: 10px;
+}
+.exec-exer-info { display: flex; align-items: flex-start; gap: 12px; }
+.exec-exer-num {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: rgba(69,209,168,.15); color: var(--accent);
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 13px; flex-shrink: 0;
+}
+.exec-exer-nome { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+.exec-exer-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.tag-grupo, .tag-prescrito, .tag-descanso {
+    font-size: 11px; padding: 2px 8px;
+    border-radius: 20px; font-weight: 600;
+}
+.tag-grupo { background: rgba(255,178,102,.15); color: #ffb266; }
+.tag-prescrito { background: rgba(69,209,168,.15); color: var(--accent); }
+.tag-descanso { background: rgba(43,124,255,.15); color: #7eb0ff; }
+
+.exec-exer-acoes { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.btn-video-mini {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: rgba(43,124,255,.2); color: #7eb0ff;
+    display: grid; place-items: center; text-decoration: none;
+    font-size: 11px; transition: background .2s;
+}
+.btn-video-mini:hover { background: rgba(43,124,255,.35); }
+
+.exec-exer-progresso {
+    font-size: 12px; font-weight: 700; color: var(--muted);
+    min-width: 34px; text-align: right;
+}
+.exec-exer-progresso.done { color: var(--accent); }
+
+.exec-exer-obs {
+    font-size: 12px; color: var(--muted);
+    border-left: 2px solid rgba(255,255,255,.1);
+    padding-left: 10px; margin-bottom: 12px;
+}
+.exec-exer-obs p { margin: 2px 0; }
+.exec-exer-obs .dica { color: #fbbf24; }
+
+/* ── GRID DE SÉRIES ── */
+.exec-series-grid {
+    display: flex; flex-direction: column; gap: 8px;
+}
+.serie-row {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--stroke);
+    border-radius: 10px; padding: 10px 12px;
+    transition: border-color .2s, background .2s;
+}
+.serie-row.feita {
+    background: rgba(69,209,168,.07);
+    border-color: rgba(69,209,168,.3);
+}
+.serie-num {
+    font-size: 12px; font-weight: 700; color: var(--muted);
+    width: 20px; flex-shrink: 0;
+}
+.serie-input-carga, .serie-input-reps {
+    flex: 1; background: rgba(255,255,255,.06);
+    border: 1px solid var(--stroke);
+    color: var(--ink); border-radius: 6px;
+    padding: 6px 8px; font-size: 13px;
+    min-width: 0;
+}
+.serie-input-carga::placeholder, .serie-input-reps::placeholder { color: var(--muted); }
+.serie-input-carga:focus, .serie-input-reps:focus {
+    outline: none; border-color: var(--accent);
+}
+.serie-label-small {
+    font-size: 10px; color: var(--muted); text-align: center; line-height: 1.2;
+}
+.btn-serie-ok {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: rgba(69,209,168,.15); border: 1px solid rgba(69,209,168,.3);
+    color: var(--accent); cursor: pointer; font-size: 16px;
+    display: grid; place-items: center; flex-shrink: 0;
+    transition: background .2s;
+}
+.btn-serie-ok:hover { background: rgba(69,209,168,.28); }
+.btn-serie-ok.feita {
+    background: var(--accent); color: #0f151c; border-color: var(--accent);
+}
+
+.exec-vazio {
+    text-align: center; padding: 60px 20px; color: var(--muted);
+}
+.exec-vazio i { font-size: 36px; margin-bottom: 12px; display: block; }
+</style>
+
+<script>
+const SESSAO_ID = {{ sessao.pk }};
+const URLS = {
+    marcarSerie: "{% url 'dashboard:sessao_marcar_serie' sessao.pk %}",
+    finalizar:   "{% url 'dashboard:sessao_finalizar' sessao.pk %}",
+    treino:      "{% url 'dashboard:consultoria_treino' %}",
+};
+const CSRF = "{{ csrf_token }}";
+const SERIES_FEITAS = {{ series_map_json|safe }};
+
+// ── CRONÔMETRO GERAL ──
+let segundosGeral = 0;
+const elCron = document.getElementById('cronometroGeral');
+setInterval(() => {
+    segundosGeral++;
+    elCron.textContent = formatarTempo(segundosGeral);
+}, 1000);
+
+function formatarTempo(s) {
+    const m = Math.floor(s / 60).toString().padStart(2, '0');
+    const ss = (s % 60).toString().padStart(2, '0');
+    return `${m}:${ss}`;
+}
+
+// ── PARSE DESCANSO ──
+function parsearDescansoSegundos(str) {
+    if (!str) return 60;
+    str = str.toLowerCase().trim();
+    // "90s" ou "90" → segundos
+    const m1 = str.match(/^(\d+)\s*s/);
+    if (m1) return parseInt(m1[1]);
+    // "1-2min" → média
+    const m2 = str.match(/(\d+)\s*[-a]\s*(\d+)\s*min/);
+    if (m2) return Math.round((parseInt(m2[1]) + parseInt(m2[2])) / 2) * 60;
+    // "1min" ou "2min"
+    const m3 = str.match(/^(\d+)\s*min/);
+    if (m3) return parseInt(m3[1]) * 60;
+    // só número → assume segundos
+    const m4 = str.match(/^(\d+)$/);
+    if (m4) return parseInt(m4[1]);
+    return 60;
+}
+
+// ── TIMER DE DESCANSO ──
+let descansoInterval = null;
+let descansoTotal = 0;
+let descansoRestante = 0;
+let onDescansoFim = null;
+
+const elOverlay   = document.getElementById('descansoOverlay');
+const elDescTimer = document.getElementById('descansoTimer');
+const elDescProg  = document.getElementById('descansoProgBar');
+const elDescProx  = document.getElementById('descansoProxima');
+const elBtnPular  = document.getElementById('btnPularDescanso');
+
+function iniciarDescanso(segundos, proximaInfo, callback) {
+    if (descansoInterval) clearInterval(descansoInterval);
+    descansoTotal    = segundos;
+    descansoRestante = segundos;
+    onDescansoFim    = callback;
+    elDescProx.textContent = proximaInfo || '';
+    atualizarDescansoUI();
+    elOverlay.style.display = 'flex';
+
+    descansoInterval = setInterval(() => {
+        descansoRestante--;
+        atualizarDescansoUI();
+        if (descansoRestante <= 0) pararDescanso(true);
+    }, 1000);
+}
+
+function atualizarDescansoUI() {
+    elDescTimer.textContent = formatarTempo(descansoRestante);
+    elDescTimer.classList.toggle('urgente', descansoRestante <= 10);
+    const pct = descansoTotal > 0 ? (descansoRestante / descansoTotal) * 100 : 0;
+    elDescProg.style.width = pct + '%';
+}
+
+function pararDescanso(chamarCallback) {
+    clearInterval(descansoInterval);
+    descansoInterval = null;
+    elOverlay.style.display = 'none';
+    if (chamarCallback && onDescansoFim) onDescansoFim();
+}
+
+elBtnPular.addEventListener('click', () => pararDescanso(true));
+
+// ── CONSTRUIR SÉRIES ──
+document.querySelectorAll('.exec-exercicio').forEach(bloco => {
+    const exerId = parseInt(bloco.dataset.exercicioId);
+    const totalSeries = parseInt(bloco.dataset.series);
+    const descStr = bloco.dataset.descanso;
+    const cargaBase = bloco.dataset.cargaBase;
+    const grid = document.getElementById(`series-${exerId}`);
+
+    for (let n = 1; n <= totalSeries; n++) {
+        const key = `${exerId}_${n}`;
+        const feita = SERIES_FEITAS[key];
+
+        const row = document.createElement('div');
+        row.className = 'serie-row' + (feita ? ' feita' : '');
+        row.id = `serie-row-${exerId}-${n}`;
+
+        row.innerHTML = `
+            <span class="serie-num">S${n}</span>
+            <div style="display:flex;flex-direction:column;flex:1;min-width:0;gap:2px">
+                <span class="serie-label-small">Carga</span>
+                <input class="serie-input-carga" type="text" placeholder="${cargaBase || 'ex: 20kg'}"
+                    value="${feita ? feita.carga_usada : ''}" id="carga-${exerId}-${n}">
+            </div>
+            <div style="display:flex;flex-direction:column;flex:1;min-width:0;gap:2px">
+                <span class="serie-label-small">Reps</span>
+                <input class="serie-input-reps" type="text" placeholder="reps"
+                    value="${feita ? feita.repeticoes_realizadas : ''}" id="reps-${exerId}-${n}">
+            </div>
+            <button class="btn-serie-ok${feita ? ' feita' : ''}" id="btn-${exerId}-${n}"
+                data-exer="${exerId}" data-n="${n}" data-desc="${descStr}" title="Marcar série">
+                <i class="fas fa-check"></i>
+            </button>`;
+
+        grid.appendChild(row);
+    }
+
+    atualizarProgresso(exerId, totalSeries);
+});
+
+// ── MARCAR SÉRIE ──
+document.addEventListener('click', e => {
+    const btn = e.target.closest('.btn-serie-ok');
+    if (!btn) return;
+
+    const exerId = parseInt(btn.dataset.exer);
+    const n      = parseInt(btn.dataset.n);
+    const descStr = btn.dataset.desc;
+
+    const carga = document.getElementById(`carga-${exerId}-${n}`).value;
+    const reps  = document.getElementById(`reps-${exerId}-${n}`).value;
+
+    const payload = {
+        exercicio_treino_id: exerId,
+        numero_serie: n,
+        carga_usada: carga,
+        repeticoes_realizadas: reps,
+        tempo_descanso_segundos: null,
+    };
+
+    fetch(URLS.marcarSerie, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify(payload),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (!data.ok) return;
+        const row = document.getElementById(`serie-row-${exerId}-${n}`);
+        row.classList.add('feita');
+        btn.classList.add('feita');
+
+        const bloco = document.getElementById(`exer-${exerId}`);
+        const totalSeries = parseInt(bloco.dataset.series);
+        atualizarProgresso(exerId, totalSeries);
+
+        // Próxima série info
+        const nextN = n + 1;
+        let proximaInfo = '';
+        if (nextN <= totalSeries) {
+            proximaInfo = `Próxima: Série ${nextN}/${totalSeries}`;
+        } else {
+            // verifica próximo exercício
+            const allBlocos = [...document.querySelectorAll('.exec-exercicio')];
+            const idx = allBlocos.indexOf(bloco);
+            if (idx + 1 < allBlocos.length) {
+                const proxBloco = allBlocos[idx + 1];
+                const proxNome = proxBloco.querySelector('.exec-exer-nome').textContent;
+                proximaInfo = `Próximo: ${proxNome}`;
+            } else {
+                proximaInfo = 'Último exercício concluído!';
+            }
+        }
+
+        const descSeg = parsearDescansoSegundos(descStr);
+        iniciarDescanso(descSeg, proximaInfo, () => {
+            // após descanso, foca no próximo input
+            const nextInput = document.getElementById(`carga-${exerId}-${nextN}`);
+            if (nextInput) nextInput.focus();
+        });
+    });
+});
+
+function atualizarProgresso(exerId, total) {
+    const feitas = document.querySelectorAll(`#series-${exerId} .btn-serie-ok.feita`).length;
+    const el = document.getElementById(`prog-${exerId}`);
+    el.textContent = `${feitas}/${total}`;
+    el.classList.toggle('done', feitas === total);
+
+    const bloco = document.getElementById(`exer-${exerId}`);
+    bloco.classList.toggle('concluido', feitas === total);
+}
+
+// ── FINALIZAR ──
+document.getElementById('btnFinalizar').addEventListener('click', () => {
+    if (!confirm('Finalizar o treino de hoje?')) return;
+    fetch(URLS.finalizar, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': CSRF },
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) window.location.href = URLS.treino;
+    });
+});
+</script>
+{% endblock %}
