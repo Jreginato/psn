@@ -87,6 +87,8 @@ class ExercicioTreinoInline(admin.TabularInline):
     fields = ('ordem', 'exercicio', 'series', 'repeticoes', 'carga', 'descanso', 'observacao_especifica')
     autocomplete_fields = ['exercicio']
     ordering = ('ordem',)
+    verbose_name = 'Exercício'
+    verbose_name_plural = '➕ Exercícios do Dia (clique em "Adicionar outro Exercício" para incluir mais)'
     formfield_overrides = {
         models.TextField: {'widget': forms.Textarea(attrs={'rows': 2, 'cols': 35})},
     }
@@ -100,14 +102,14 @@ class DiaTreinoAdmin(admin.ModelAdmin):
     inlines = [ExercicioTreinoInline]
 
     fieldsets = (
-        (None, {
+        ('📋 Dia de Treino', {
             'fields': ('treino', 'nome', 'ordem', 'descricao')
         }),
     )
 
     def treino_link(self, obj):
         url = reverse('admin:accounts_treino_change', args=[obj.treino.pk])
-        return format_html('<a href="{}">← {}</a>', url, obj.treino.titulo)
+        return format_html('<a href="{}">⬅ {}</a>', url, obj.treino.titulo)
     treino_link.short_description = 'Treino'
 
     def total_exercicios(self, obj):
@@ -118,9 +120,24 @@ class DiaTreinoAdmin(admin.ModelAdmin):
 class DiaTreinoInline(admin.TabularInline):
     model = DiaTreino
     extra = 1
-    fields = ('ordem', 'nome', 'descricao')
+    fields = ('ordem', 'nome', 'descricao', 'exercicios_link')
+    readonly_fields = ('exercicios_link',)
     ordering = ('ordem',)
-    show_change_link = True
+    verbose_name = 'Dia de Treino'
+    verbose_name_plural = 'Dias de Treino  —  salve o treino para liberar o botão de exercícios em cada dia'
+
+    def exercicios_link(self, obj):
+        if not obj.pk:
+            return '—'
+        url = reverse('admin:accounts_diatreino_change', args=[obj.pk])
+        count = obj.exercicios.count()
+        label = f'{count} exercício(s)' if count else 'Adicionar exercícios'
+        return format_html(
+            '<a href="{}" style="background:#10b981;color:#fff;padding:4px 10px;'
+            'border-radius:6px;font-size:12px;text-decoration:none;white-space:nowrap">'
+            '✏️ {}</a>', url, label
+        )
+    exercicios_link.short_description = 'Exercícios'
 
 
 @admin.register(Treino)
