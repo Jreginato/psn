@@ -96,9 +96,11 @@ class ExercicioTreinoInline(admin.TabularInline):
 
 @admin.register(DiaTreino)
 class DiaTreinoAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'treino_link', 'ordem', 'total_exercicios')
+    list_display = ('nome', 'aluno_nome', 'treino_link', 'ordem', 'total_exercicios')
     list_filter = ('treino__consultoria__usuario',)
-    search_fields = ('nome', 'treino__titulo')
+    search_fields = ('nome', 'treino__titulo', 'treino__consultoria__usuario__first_name',
+                     'treino__consultoria__usuario__last_name', 'treino__consultoria__usuario__username')
+    autocomplete_fields = ['treino']
     inlines = [ExercicioTreinoInline]
 
     fieldsets = (
@@ -106,6 +108,12 @@ class DiaTreinoAdmin(admin.ModelAdmin):
             'fields': ('treino', 'nome', 'ordem', 'descricao')
         }),
     )
+
+    def aluno_nome(self, obj):
+        u = obj.treino.consultoria.usuario
+        return u.get_full_name() or u.username
+    aluno_nome.short_description = 'Aluno'
+    aluno_nome.admin_order_field = 'treino__consultoria__usuario__first_name'
 
     def treino_link(self, obj):
         url = reverse('admin:accounts_treino_change', args=[obj.treino.pk])
@@ -210,6 +218,15 @@ class TreinoAdmin(admin.ModelAdmin):
                 lambda obj: f"{obj.usuario.get_full_name() or obj.usuario.username} ({obj.usuario.email})"
             )
         return field
+
+    def get_search_results(self, request, queryset, search_term):
+        queryset, use_distinct = super().get_search_results(request, queryset, search_term)
+        return queryset.select_related('consultoria__usuario'), use_distinct
+
+    def autocomplete_label(self, obj):
+        u = obj.consultoria.usuario
+        nome = u.get_full_name() or u.username
+        return f"{obj.titulo} — {nome}"
 
 
 # ===== SESSÕES DE TREINO =====

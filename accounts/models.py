@@ -119,7 +119,12 @@ class Treino(models.Model):
         ordering = ['-status', '-criado_em']
     
     def __str__(self):
-        return f"{self.titulo} ({self.get_status_display()})"
+        try:
+            u = self.consultoria.usuario
+            nome = u.get_full_name() or u.username
+            return f"{self.titulo} — {nome} ({self.get_status_display()})"
+        except Exception:
+            return self.titulo
 
 
 class DiaTreino(models.Model):
