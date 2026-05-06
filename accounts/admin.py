@@ -5,6 +5,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
 from django.utils import timezone
 from django.urls import reverse
+import nested_admin
 from .models import CustomUser, ConsultoriaOnline, Exercicio, Treino, DiaTreino, ExercicioTreino, SessaoTreino, SerieRealizada
 
 
@@ -79,60 +80,35 @@ class ExercicioAdmin(admin.ModelAdmin):
     )
 
 
-# ===== TREINOS =====
+# ===== TREINOS — INLINE ANINHADO =====
 
-class ExercicioTreinoInline(admin.TabularInline):
+class ExercicioTreinoNestedInline(nested_admin.NestedTabularInline):
     model = ExercicioTreino
     extra = 1
     fields = ('ordem', 'exercicio', 'series', 'repeticoes', 'carga', 'descanso', 'observacao_especifica')
-    autocomplete_fields = ['exercicio']
+    raw_id_fields = ['exercicio']
     ordering = ('ordem',)
     formfield_overrides = {
         models.TextField: {'widget': forms.Textarea(attrs={'rows': 2, 'cols': 35})},
     }
 
 
-class DiaTreinoInline(admin.TabularInline):
+class DiaTreinoNestedInline(nested_admin.NestedStackedInline):
     model = DiaTreino
     extra = 1
-    fields = ('ordem', 'nome', 'descricao', 'editar_exercicios')
-    readonly_fields = ('editar_exercicios',)
+    fields = ('nome', 'ordem', 'descricao')
     ordering = ('ordem',)
-
-    def editar_exercicios(self, obj):
-        if not obj.pk:
-            return '— salve o treino primeiro —'
-        url = reverse('admin:accounts_diatreino_change', args=[obj.pk])
-        return format_html('<a href="{}" target="_blank">✏️ Editar exercícios</a>', url)
-    editar_exercicios.short_description = 'Exercícios'
-
-
-@admin.register(DiaTreino)
-class DiaTreinoAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'treino', 'ordem', 'total_exercicios')
-    list_filter = ('treino__consultoria__usuario',)
-    search_fields = ('nome', 'treino__titulo')
-    inlines = [ExercicioTreinoInline]
-
-    fieldsets = (
-        (None, {
-            'fields': ('treino', 'nome', 'ordem', 'descricao')
-        }),
-    )
-
-    def total_exercicios(self, obj):
-        return obj.exercicios.count()
-    total_exercicios.short_description = 'Exercícios'
+    inlines = [ExercicioTreinoNestedInline]
 
 
 @admin.register(Treino)
-class TreinoAdmin(admin.ModelAdmin):
+class TreinoAdmin(nested_admin.NestedModelAdmin):
     list_display = ('titulo', 'aluno_link', 'status_badge', 'total_dias', 'criado_em')
     list_filter = ('status', 'consultoria__usuario')
     search_fields = ('titulo', 'descricao', 'consultoria__usuario__username',
                      'consultoria__usuario__first_name', 'consultoria__usuario__last_name')
     readonly_fields = ('aluno_info', 'criado_em', 'atualizado_em')
-    inlines = [DiaTreinoInline]
+    inlines = [DiaTreinoNestedInline]
 
     fieldsets = (
         ('Identificação', {
