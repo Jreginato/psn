@@ -5,7 +5,6 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
 from django.utils import timezone
 from django.urls import reverse
-import nested_admin
 from .models import CustomUser, ConsultoriaOnline, Exercicio, Treino, DiaTreino, ExercicioTreino, SessaoTreino, SerieRealizada
 
 
@@ -80,35 +79,58 @@ class ExercicioAdmin(admin.ModelAdmin):
     )
 
 
-# ===== TREINOS — INLINE ANINHADO =====
+# ===== TREINOS =====
 
-class ExercicioTreinoNestedInline(nested_admin.NestedTabularInline):
+class ExercicioTreinoInline(admin.TabularInline):
     model = ExercicioTreino
     extra = 1
     fields = ('ordem', 'exercicio', 'series', 'repeticoes', 'carga', 'descanso', 'observacao_especifica')
-    raw_id_fields = ['exercicio']
+    autocomplete_fields = ['exercicio']
     ordering = ('ordem',)
     formfield_overrides = {
         models.TextField: {'widget': forms.Textarea(attrs={'rows': 2, 'cols': 35})},
     }
 
 
-class DiaTreinoNestedInline(nested_admin.NestedStackedInline):
+@admin.register(DiaTreino)
+class DiaTreinoAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'treino_link', 'ordem', 'total_exercicios')
+    list_filter = ('treino__consultoria__usuario',)
+    search_fields = ('nome', 'treino__titulo')
+    inlines = [ExercicioTreinoInline]
+
+    fieldsets = (
+        (None, {
+            'fields': ('treino', 'nome', 'ordem', 'descricao')
+        }),
+    )
+
+    def treino_link(self, obj):
+        url = reverse('admin:accounts_treino_change', args=[obj.treino.pk])
+        return format_html('<a href="{}">← {}</a>', url, obj.treino.titulo)
+    treino_link.short_description = 'Treino'
+
+    def total_exercicios(self, obj):
+        return obj.exercicios.count()
+    total_exercicios.short_description = 'Exercícios'
+
+
+class DiaTreinoInline(admin.TabularInline):
     model = DiaTreino
     extra = 1
-    fields = ('nome', 'ordem', 'descricao')
+    fields = ('ordem', 'nome', 'descricao')
     ordering = ('ordem',)
-    inlines = [ExercicioTreinoNestedInline]
+    show_change_link = True
 
 
 @admin.register(Treino)
-class TreinoAdmin(nested_admin.NestedModelAdmin):
+class TreinoAdmin(admin.ModelAdmin):
     list_display = ('titulo', 'aluno_link', 'status_badge', 'total_dias', 'criado_em')
     list_filter = ('status', 'consultoria__usuario')
     search_fields = ('titulo', 'descricao', 'consultoria__usuario__username',
                      'consultoria__usuario__first_name', 'consultoria__usuario__last_name')
     readonly_fields = ('aluno_info', 'criado_em', 'atualizado_em')
-    inlines = [DiaTreinoNestedInline]
+    inlines = [DiaTreinoInline]
 
     fieldsets = (
         ('Identificação', {
