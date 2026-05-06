@@ -1,5 +1,5 @@
-const CACHE_NAME = 'personal-trainer-v1';
-const RUNTIME_CACHE = 'personal-trainer-runtime';
+const CACHE_NAME = 'julio-reginato-v2';
+const RUNTIME_CACHE = 'julio-reginato-runtime';
 
 // Arquivos essenciais para cache durante a instalação
 const PRECACHE_URLS = [
