@@ -85,7 +85,6 @@ class ExercicioTreinoNestedInline(nested_admin.NestedTabularInline):
     model = ExercicioTreino
     extra = 1
     fields = ('ordem', 'exercicio', 'series', 'repeticoes', 'carga', 'descanso', 'observacao_especifica')
-    autocomplete_fields = ['exercicio']
     ordering = ('ordem',)
     formfield_overrides = {
         models.TextField: {'widget': forms.Textarea(attrs={'rows': 2, 'cols': 35})},
